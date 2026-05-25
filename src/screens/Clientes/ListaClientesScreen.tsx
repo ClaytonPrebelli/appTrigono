@@ -28,6 +28,7 @@ export default function ListaClientesScreen() {
     try {
       const data = await clientesApi.listar();
       setClientes(data);
+      setFilteredClientes(data);
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Falha ao carregar clientes');
     } finally {
@@ -38,10 +39,11 @@ export default function ListaClientesScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  const applyFilter = useCallback((texto: string, filtro: typeof statusFilter, lista: Cliente[]) => {
-    let result = lista;
-    if (filtro === 'ativo') result = result.filter(c => c.isAtivo === true);
-    else if (filtro === 'inativo') result = result.filter(c => c.isAtivo === false);
+  const handleSearch = (texto: string) => {
+    setSearch(texto);
+    let result = [...clientes];
+    if (statusFilter === 'ativo') result = result.filter(c => c.isAtivo === true);
+    else if (statusFilter === 'inativo') result = result.filter(c => c.isAtivo === false);
     if (texto.trim()) {
       const q = texto.trim().toLowerCase();
       result = result.filter(c =>
@@ -50,20 +52,21 @@ export default function ListaClientesScreen() {
       );
     }
     setFilteredClientes(result);
-  }, []);
-
-  useEffect(() => {
-    applyFilter(search, statusFilter, clientes);
-  }, [clientes, statusFilter, applyFilter]);
-
-  const handleSearch = (texto: string) => {
-    setSearch(texto);
-    applyFilter(texto, statusFilter, clientes);
   };
 
   const handleStatusFilter = (filtro: typeof statusFilter) => {
     setStatusFilter(filtro);
-    applyFilter(search, filtro, clientes);
+    let result = [...clientes];
+    if (filtro === 'ativo') result = result.filter(c => c.isAtivo === true);
+    else if (filtro === 'inativo') result = result.filter(c => c.isAtivo === false);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter(c =>
+        (c.razaoSocial || '').toLowerCase().includes(q) ||
+        (c.cnpj || '').replace(/\D/g, '').includes(q.replace(/\D/g, ''))
+      );
+    }
+    setFilteredClientes(result);
   };
 
   const onRefresh = useCallback(() => {
