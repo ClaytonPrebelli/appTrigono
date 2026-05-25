@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 16, color: colors.textSecondary },
   emptyText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', paddingVertical: spacing.md },
   cobrancaCard: {
-    backgroundColor: colors.background, borderRadius: borderRadius.md,
+    backgroundColor: '#fff', borderRadius: borderRadius.md,
     padding: spacing.md, marginBottom: spacing.sm,
   },
   cobrancaHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },

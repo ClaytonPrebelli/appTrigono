@@ -182,10 +182,15 @@ export default function ListaClientesScreen() {
           </TouchableOpacity>
         ))}
       </View>
-      <Text style={styles.debugCount}>{filteredClientes.length} de {clientes.length} clientes</Text>
+      <View style={styles.debugRow}>
+        <Text style={styles.debugCount}>{filteredClientes.length} de {clientes.length}</Text>
+        <Text style={styles.debugSearch}>Busca: "{search}"</Text>
+        <Text style={styles.debugKey}># {filterKey}</Text>
+      </View>
       <FlatList
         key={`lista-${filterKey}`}
         data={filteredClientes}
+        extraData={filterKey}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
@@ -257,5 +262,8 @@ const styles = StyleSheet.create({
   cnpj: { fontSize: 14, color: colors.textSecondary, marginBottom: 2 },
   contato: { fontSize: 13, color: colors.textDisabled },
   empty: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: spacing.xl, fontSize: 16 },
-  debugCount: { color: 'rgba(255,255,255,0.5)', fontSize: 12, paddingHorizontal: spacing.md, marginBottom: 2 },
+  debugRow: { flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.md, marginBottom: 2 },
+  debugCount: { color: '#10b981', fontSize: 13, fontWeight: '600' },
+  debugSearch: { color: '#f59e0b', fontSize: 13, fontWeight: '600' },
+  debugKey: { color: '#3b82f6', fontSize: 13, fontWeight: '600' },
 });

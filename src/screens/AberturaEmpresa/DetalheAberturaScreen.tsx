@@ -49,11 +49,12 @@ export default function DetalheAberturaScreen() {
     </View>
   );
 
-  const handleDownload = async (docId: number, tipo?: string) => {
-    const url = `${API_URL}/AberturaEmpresa/DownloadDocumento?documentoId=${docId}`;
+  const handleDownload = async (doc: { id: number; nomeArquivo?: string; tipoDocumento?: string }) => {
+    const url = `${API_URL}/AberturaEmpresa/DownloadDocumento?documentoId=${doc.id}`;
     try {
+      const ext = doc.nomeArquivo?.split('.').pop() || 'pdf';
       const primeiroNome = (form?.opcao1NomeEmpresa || '').split(' ')[0] || 'documento';
-      const nomeArquivo = `${primeiroNome}_${tipo || 'documento'}`;
+      const nomeArquivo = `${primeiroNome}_${doc.tipoDocumento || 'documento'}.${ext}`;
       const fileUri = `${FileSystem.cacheDirectory}${nomeArquivo}`;
       const result = await FileSystem.downloadAsync(url, fileUri);
       const contentUri = await FileSystem.getContentUriAsync(result.uri);
@@ -153,7 +154,7 @@ export default function DetalheAberturaScreen() {
             <TouchableOpacity
               key={doc.id}
               style={styles.docCard}
-              onPress={() => handleDownload(doc.id, doc.tipoDocumento)}
+              onPress={() => handleDownload(doc)}
             >
               <View style={styles.docInfo}>
                 <Text style={styles.docName}>{doc.tipoDocumento || 'Documento'}</Text>
