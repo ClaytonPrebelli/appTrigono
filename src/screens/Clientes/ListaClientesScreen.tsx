@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   RefreshControl, ActivityIndicator, Alert, TextInput,
@@ -16,7 +16,6 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 export default function ListaClientesScreen() {
   const navigation = useNavigation<NavProp>();
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [filteredClientes, setFilteredClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
@@ -38,7 +37,7 @@ export default function ListaClientesScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  useEffect(() => {
+  const filteredClientes = useMemo(() => {
     let result = clientes;
     if (statusFilter === 'ativo') result = result.filter(c => c.isAtivo === true);
     else if (statusFilter === 'inativo') result = result.filter(c => c.isAtivo === false);
@@ -49,7 +48,7 @@ export default function ListaClientesScreen() {
         (c.cnpj || '').replace(/\D/g, '').includes(q.replace(/\D/g, ''))
       );
     }
-    setFilteredClientes(result);
+    return result;
   }, [clientes, search, statusFilter]);
 
   const onRefresh = useCallback(() => {
@@ -159,7 +158,6 @@ export default function ListaClientesScreen() {
         ))}
       </View>
       <FlatList
-        key={`filtro-${search}-${statusFilter}`}
         data={filteredClientes}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
