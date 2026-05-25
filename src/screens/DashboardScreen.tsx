@@ -1,10 +1,14 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, StatusBar } from 'react-native';
+import {
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
+  ScrollView, StatusBar, Alert, BackHandler, Platform,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { colors, spacing, borderRadius } from '../theme';
+import { verificarAtualizacao } from '../services/updateService';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -17,6 +21,33 @@ const icons: Record<string, string> = {
 export default function DashboardScreen() {
   const { user, signOut } = useAuth();
   const navigation = useNavigation<NavProp>();
+
+  const handleSignOut = async () => {
+    await signOut();
+    if (Platform.OS === 'android') {
+      BackHandler.exitApp();
+    }
+  };
+
+  const handleCheckUpdate = async () => {
+    try {
+      const info = await verificarAtualizacao();
+      if (info) {
+        Alert.alert(
+          'Atualização disponível',
+          `Nova versão: v${info.versaoNova}\nAtual: v${info.versaoAtual}`,
+          [
+            { text: 'Atualizar', onPress: () => {} },
+            { text: 'OK', style: 'cancel' },
+          ]
+        );
+      } else {
+        Alert.alert('Sem atualizações', 'Você já está na versão mais recente.');
+      }
+    } catch {
+      Alert.alert('Erro', 'Não foi possível verificar atualizações.');
+    }
+  };
 
   const cards = [
     { title: 'Clientes', subtitle: 'Gerenciar clientes', route: 'Clientes' as const },
@@ -56,7 +87,11 @@ export default function DashboardScreen() {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={signOut} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.updateButton} onPress={handleCheckUpdate} activeOpacity={0.7}>
+          <Text style={styles.updateIcon}>📲</Text>
+          <Text style={styles.updateText}>Verificar Atualização</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut} activeOpacity={0.7}>
           <Text style={styles.logoutIcon}>🚪</Text>
           <Text style={styles.logoutText}>Sair</Text>
         </TouchableOpacity>
@@ -107,6 +142,16 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 3 },
   cardSubtitle: { fontSize: 14, color: colors.textSecondary },
   cardArrow: { fontSize: 28, color: colors.textDisabled, fontWeight: '300' },
+  updateButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
+    marginHorizontal: spacing.lg, marginTop: spacing.xl * 1.5,
+    backgroundColor: colors.surface, borderRadius: borderRadius.md,
+    paddingVertical: 16, elevation: 2,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1, shadowRadius: 4,
+  },
+  updateIcon: { fontSize: 18 },
+  updateText: { color: colors.primary, fontSize: 16, fontWeight: '700' },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',

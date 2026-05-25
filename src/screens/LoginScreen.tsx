@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Switch,
   Alert, KeyboardAvoidingView, Platform, ActivityIndicator, Image,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { colors, borderRadius, spacing } from '../theme';
 
@@ -11,7 +12,19 @@ export default function LoginScreen() {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const [showSenha, setShowSenha] = useState(false);
+  const [salvarSenha, setSalvarSenha] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem('@trigono_saved_login').then((saved) => {
+      if (saved) {
+        const { usuario: u, senha: s } = JSON.parse(saved);
+        setUsuario(u || '');
+        setSenha(s || '');
+        setSalvarSenha(true);
+      }
+    }).catch(() => {});
+  }, []);
 
   const handleLogin = async () => {
     if (!usuario.trim() || !senha.trim()) {
@@ -20,6 +33,11 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
+      if (salvarSenha) {
+        await AsyncStorage.setItem('@trigono_saved_login', JSON.stringify({ usuario: usuario.trim(), senha: senha.trim() }));
+      } else {
+        await AsyncStorage.removeItem('@trigono_saved_login');
+      }
       await signIn({ usuario: usuario.trim(), senha: senha.trim() });
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Falha ao fazer login');
@@ -68,6 +86,15 @@ export default function LoginScreen() {
             >
               <Text style={styles.eyeText}>{showSenha ? '🙈' : '👁️'}</Text>
             </TouchableOpacity>
+          </View>
+          <View style={styles.rememberRow}>
+            <Switch
+              value={salvarSenha}
+              onValueChange={setSalvarSenha}
+              trackColor={{ false: '#94a3b8', true: '#3b82f6' }}
+              thumbColor={salvarSenha ? '#fff' : '#f1f5f9'}
+            />
+            <Text style={styles.rememberText}>Salvar senha</Text>
           </View>
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
@@ -118,6 +145,11 @@ const styles = StyleSheet.create({
   },
   eyeButton: { paddingHorizontal: spacing.md, paddingVertical: 14 },
   eyeText: { fontSize: 20 },
+  rememberRow: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  rememberText: { color: '#fff', fontSize: 14 },
   button: {
     backgroundColor: colors.accent, borderRadius: borderRadius.md,
     paddingVertical: 14, alignItems: 'center', marginTop: spacing.sm,

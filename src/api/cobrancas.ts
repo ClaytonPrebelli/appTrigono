@@ -34,9 +34,15 @@ export const cobrancasApi = {
   },
 
   listarPorCliente: async (clienteId: number, pagina: number, itensPorPagina: number): Promise<Cobranca[]> => {
-    const response = await apiClient.get<Cobranca[]>(
+    const response = await apiClient.get<any>(
       `/Cobrancas/ListarCobrancasPorCliente?clienteId=${clienteId}&pagina=${pagina}&itensPorPagina=${itensPorPagina}`
     );
-    return response.data;
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    if (data && data.data) return Array.isArray(data.data) ? data.data : [];
+    if (data && data.items) return Array.isArray(data.items) ? data.items : [];
+    if (data && data.result) return Array.isArray(data.result) ? data.result : [];
+    if (data && data.cobrancas) return Array.isArray(data.cobrancas) ? data.cobrancas : [];
+    return [];
   },
 };
