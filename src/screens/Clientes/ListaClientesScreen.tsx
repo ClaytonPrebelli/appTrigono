@@ -9,16 +9,20 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import { Cliente } from '../../types/cliente';
 import { clientesApi } from '../../api/clientes';
 import { colors, spacing, borderRadius } from '../../theme';
+import ListModal from '../../components/ListModal';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ListaClientesScreen() {
   const navigation = useNavigation<NavProp>();
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [filteredClientes, setFilteredClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'ativo' | 'inativo'>('todos');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalData, setModalData] = useState<{ titulo: string; itens: { titulo: string; linhas: { label: string; valor: string }[] }[] }>({ titulo: '', itens: [] });
 
   const load = useCallback(async () => {
     try {
@@ -34,12 +38,7 @@ export default function ListaClientesScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    load();
-  }, [load]);
-
-  const filteredClientes = (() => {
+  useEffect(() => {
     let result = clientes;
     if (statusFilter === 'ativo') result = result.filter(c => c.isAtivo === true);
     else if (statusFilter === 'inativo') result = result.filter(c => c.isAtivo === false);
@@ -50,8 +49,13 @@ export default function ListaClientesScreen() {
         (c.cnpj || '').replace(/\D/g, '').includes(q.replace(/\D/g, ''))
       );
     }
-    return result;
-  })();
+    setFilteredClientes(result);
+  }, [clientes, search, statusFilter]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    load();
+  }, [load]);
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
@@ -137,8 +141,16 @@ export default function ListaClientesScreen() {
             key={stat.label}
             style={[styles.certCard, { borderTopColor: stat.color }]}
             onPress={() => {
-              const names = stat.data.map(c => `${c.razaoSocial} - ${c.cnpj}`).join('\n');
-              Alert.alert(`${stat.label} (${stat.value})`, names || 'Nenhum');
+              const itens = stat.data.map(c => ({
+                titulo: c.razaoSocial || 'Sem nome',
+                linhas: [
+                  { label: 'CNPJ', valor: formatCNPJ(c.cnpj) },
+                  { label: 'Validade Certificado', valor: c.validadeCertificado ? new Date(c.validadeCertificado).toLocaleDateString('pt-BR') : 'N/A' },
+                  { label: 'Contato', valor: `${c.fone || '-'} | ${c.email || '-'}` },
+                ],
+              }));
+              setModalData({ titulo: `${stat.label} (${stat.value})`, itens });
+              setModalVisible(true);
             }}
           >
             <Text style={[styles.certValue, { color: stat.color }]}>{stat.value}</Text>
@@ -154,6 +166,12 @@ export default function ListaClientesScreen() {
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={<Text style={styles.empty}>Nenhum cliente encontrado</Text>}
+      />
+      <ListModal
+        visible={modalVisible}
+        titulo={modalData.titulo}
+        itens={modalData.itens}
+        onClose={() => setModalVisible(false)}
       />
     </View>
   );

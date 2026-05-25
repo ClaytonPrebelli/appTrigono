@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  RefreshControl, ActivityIndicator, Alert, Modal, TextInput,
+  RefreshControl, ActivityIndicator, Alert, Modal, TextInput, Share,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -110,9 +110,19 @@ export default function ListaAberturaScreen() {
               multiline
               selectTextOnFocus
             />
-            <TouchableOpacity style={styles.modalBtnClose} onPress={() => setLinkModalVisible(false)}>
-              <Text style={styles.modalBtnCloseText}>Fechar</Text>
-            </TouchableOpacity>
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalBtnShare]}
+                onPress={() => {
+                  Share.share({ message: linkGerado });
+                }}
+              >
+                <Text style={styles.modalBtnShareText}>Compartilhar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalBtn, styles.modalBtnClose]} onPress={() => setLinkModalVisible(false)}>
+                <Text style={styles.modalBtnCloseText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -158,8 +168,15 @@ const styles = StyleSheet.create({
     padding: spacing.md, borderRadius: borderRadius.sm, marginBottom: spacing.lg,
     textAlign: 'center', borderWidth: 1, borderColor: colors.border,
   },
+  modalBtnRow: { flexDirection: 'row', gap: spacing.sm },
+  modalBtn: {
+    flex: 1, borderRadius: borderRadius.md, paddingVertical: 14, alignItems: 'center',
+  },
+  modalBtnShare: {
+    backgroundColor: colors.accent,
+  },
+  modalBtnShareText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   modalBtnClose: {
-    borderRadius: borderRadius.md, paddingVertical: 14, alignItems: 'center',
     backgroundColor: colors.primary,
   },
   modalBtnCloseText: { color: '#fff', fontSize: 16, fontWeight: '600' },

@@ -9,6 +9,7 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import { Cobranca } from '../../types/cobranca';
 import { cobrancasApi } from '../../api/cobrancas';
 import { colors, spacing, borderRadius } from '../../theme';
+import ListModal from '../../components/ListModal';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -24,6 +25,8 @@ export default function ListaCobrancasScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [referencia, setReferencia] = useState(formatMesRef(new Date()));
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalData, setModalData] = useState<{ titulo: string; itens: { titulo: string; linhas: { label: string; valor: string }[] }[] }>({ titulo: '', itens: [] });
 
   const load = useCallback(async (ref?: string) => {
     try {
@@ -138,10 +141,16 @@ export default function ListaCobrancasScreen() {
               key={item.label}
               style={[styles.dashCard, { borderTopColor: item.color }]}
               onPress={() => {
-                const names = (item.data as Cobranca[]).map(c =>
-                  `${c.descricao} - ${formatCurrency(c.valor)}`
-                ).join('\n');
-                Alert.alert(`${item.label} (${item.value})`, names || 'Nenhum');
+                const itens = (item.data as Cobranca[]).map(c => ({
+                  titulo: c.descricao || 'Cobrança',
+                  linhas: [
+                    { label: 'Valor', valor: formatCurrency(c.valor) },
+                    { label: 'Vencimento', valor: formatDate(c.dataVencimento) },
+                    { label: 'Cliente', valor: c.cliente?.razaoSocial || '-' },
+                  ],
+                }));
+                setModalData({ titulo: `${item.label} (${item.value})`, itens });
+                setModalVisible(true);
               }}
             >
               <Text style={[styles.dashValue, { color: item.color }]}>{item.value}</Text>
@@ -155,10 +164,16 @@ export default function ListaCobrancasScreen() {
               key={item.label}
               style={[styles.dashCard, styles.dashCardHalf, { borderTopColor: item.color }]}
               onPress={() => {
-                const names = (item.data as Cobranca[]).map(c =>
-                  `${c.descricao} - ${formatCurrency(c.valor)}`
-                ).join('\n');
-                Alert.alert(`${item.label} (${item.value})`, names || 'Nenhum');
+                const itens = (item.data as Cobranca[]).map(c => ({
+                  titulo: c.descricao || 'Cobrança',
+                  linhas: [
+                    { label: 'Valor', valor: formatCurrency(c.valor) },
+                    { label: 'Vencimento', valor: formatDate(c.dataVencimento) },
+                    { label: 'Cliente', valor: c.cliente?.razaoSocial || '-' },
+                  ],
+                }));
+                setModalData({ titulo: `${item.label}`, itens });
+                setModalVisible(true);
               }}
             >
               <Text style={[styles.dashValue, { color: item.color }]}>{item.value}</Text>
@@ -168,6 +183,12 @@ export default function ListaCobrancasScreen() {
         </View>
       </View>
 
+      <ListModal
+        visible={modalVisible}
+        titulo={modalData.titulo}
+        itens={modalData.itens}
+        onClose={() => setModalVisible(false)}
+      />
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => navigation.navigate('RegistroCobranca', {})}
