@@ -9,6 +9,7 @@ import DashboardScreen from '../screens/DashboardScreen';
 import ListaClientesScreen from '../screens/Clientes/ListaClientesScreen';
 import DetalheClienteScreen from '../screens/Clientes/DetalheClienteScreen';
 import ListaCobrancasScreen from '../screens/Cobrancas/ListaCobrancasScreen';
+import DetalheCobrancaScreen from '../screens/Cobrancas/DetalheCobrancaScreen';
 import RegistroCobrancaScreen from '../screens/Cobrancas/RegistroCobrancaScreen';
 import ListaAberturaScreen from '../screens/AberturaEmpresa/ListaAberturaScreen';
 import DetalheAberturaScreen from '../screens/AberturaEmpresa/DetalheAberturaScreen';
@@ -20,6 +21,7 @@ export type RootStackParamList = {
   Cobrancas: undefined;
   AberturaEmpresa: undefined;
   DetalheCliente: { id: number };
+  DetalheCobranca: { id: number };
   RegistroCobranca: { id?: number };
   DetalheAbertura: { id: number };
 };
@@ -54,6 +56,7 @@ export default function AppNavigator() {
           <Stack.Screen name="Cobrancas" component={ListaCobrancasScreen} options={{ headerShown: true, title: 'Cobranças', ...screenOptions }} />
           <Stack.Screen name="AberturaEmpresa" component={ListaAberturaScreen} options={{ headerShown: true, title: 'Abertura de Empresa', ...screenOptions }} />
           <Stack.Screen name="DetalheCliente" component={DetalheClienteScreen} options={{ headerShown: true, title: 'Detalhe do Cliente', ...screenOptions }} />
+          <Stack.Screen name="DetalheCobranca" component={DetalheCobrancaScreen} options={{ headerShown: true, title: 'Detalhe da Cobrança', ...screenOptions }} />
           <Stack.Screen name="RegistroCobranca" component={RegistroCobrancaScreen} options={{ headerShown: true, title: 'Nova Cobrança', ...screenOptions }} />
           <Stack.Screen name="DetalheAbertura" component={DetalheAberturaScreen} options={{ headerShown: true, title: 'Detalhe da Abertura', ...screenOptions }} />
         </>

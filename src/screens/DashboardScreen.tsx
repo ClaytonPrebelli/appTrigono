@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,12 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { colors, spacing, borderRadius } from '../theme';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
+
+const icons: Record<string, string> = {
+  Clientes: '👥',
+  Cobrancas: '📋',
+  AberturaEmpresa: '📄',
+};
 
 export default function DashboardScreen() {
   const { user, signOut } = useAuth();
@@ -19,44 +25,96 @@ export default function DashboardScreen() {
   ];
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.welcome}>Bem-vindo, {user?.nome || 'Usuário'}</Text>
-      <View style={styles.cardGrid}>
-        {cards.map((card) => (
-          <TouchableOpacity
-            key={card.route}
-            style={styles.card}
-            onPress={() => navigation.navigate(card.route)}
-          >
-            <Text style={styles.cardTitle}>{card.title}</Text>
-            <Text style={styles.cardSubtitle}>{card.subtitle}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-        <Text style={styles.logoutText}>Sair</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <Text style={styles.welcome}>Bem-vindo,</Text>
+            <Text style={styles.userName}>{user?.nome || 'Usuário'}</Text>
+            <Text style={styles.userRole}>
+              {user?.isAdmin ? 'Administrador' : user?.isManager ? 'Gerente' : 'Usuário'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.cardGrid}>
+          {cards.map((card) => (
+            <TouchableOpacity
+              key={card.route}
+              style={styles.card}
+              onPress={() => navigation.navigate(card.route)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.cardIcon}>{icons[card.route]}</Text>
+              <View style={styles.cardText}>
+                <Text style={styles.cardTitle}>{card.title}</Text>
+                <Text style={styles.cardSubtitle}>{card.subtitle}</Text>
+              </View>
+              <Text style={styles.cardArrow}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={signOut} activeOpacity={0.7}>
+          <Text style={styles.logoutIcon}>🚪</Text>
+          <Text style={styles.logoutText}>Sair</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.md },
-  welcome: {
-    fontSize: 22, fontWeight: 'bold', color: colors.textPrimary,
-    marginBottom: spacing.lg, marginTop: spacing.md,
+  safe: { flex: 1, backgroundColor: colors.primary },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { paddingBottom: spacing.xl },
+  header: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl * 1.5,
+    borderBottomLeftRadius: borderRadius.lg,
+    borderBottomRightRadius: borderRadius.lg,
   },
-  cardGrid: { gap: spacing.md },
+  headerContent: {},
+  welcome: { fontSize: 16, color: 'rgba(255,255,255,0.8)', marginBottom: 2 },
+  userName: { fontSize: 26, fontWeight: 'bold', color: '#fff', marginBottom: 4 },
+  userRole: {
+    fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '500',
+  },
+  cardGrid: {
+    paddingHorizontal: spacing.md,
+    marginTop: -spacing.lg,
+    gap: spacing.sm,
+  },
   card: {
-    backgroundColor: colors.surface, borderRadius: borderRadius.lg,
-    padding: spacing.lg, elevation: 2, shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 4,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  cardTitle: { fontSize: 18, fontWeight: '600', color: colors.primary, marginBottom: spacing.xs },
-  cardSubtitle: { fontSize: 14, color: colors.textSecondary },
+  cardIcon: { fontSize: 28, marginRight: spacing.md },
+  cardText: { flex: 1 },
+  cardTitle: { fontSize: 17, fontWeight: '600', color: colors.textPrimary, marginBottom: 2 },
+  cardSubtitle: { fontSize: 13, color: colors.textSecondary },
+  cardArrow: { fontSize: 24, color: colors.textDisabled, fontWeight: '300' },
   logoutButton: {
-    marginTop: 'auto', backgroundColor: colors.error, borderRadius: borderRadius.md,
-    paddingVertical: 12, alignItems: 'center', marginBottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.lg,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: borderRadius.md,
+    paddingVertical: 14,
   },
-  logoutText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  logoutIcon: { fontSize: 18 },
+  logoutText: { color: colors.error, fontSize: 16, fontWeight: '600' },
 });

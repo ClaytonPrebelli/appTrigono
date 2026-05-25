@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  RefreshControl, ActivityIndicator, Alert,
+  RefreshControl, ActivityIndicator, Alert, TextInput,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,27 +14,53 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ListaClientesScreen() {
   const navigation = useNavigation<NavProp>();
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [allClientes, setAllClientes] = useState<Cliente[]>([]);
+  const [filteredClientes, setFilteredClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'todos' | 'ativo' | 'inativo'>('todos');
+
+  const applyFilters = useCallback((data: Cliente[], s: string, st: string) => {
+    let result = data;
+    if (st === 'ativo') result = result.filter(c => c.isAtivo);
+    else if (st === 'inativo') result = result.filter(c => !c.isAtivo);
+    if (s.trim()) {
+      const q = s.trim().toLowerCase();
+      result = result.filter(c =>
+        c.razaoSocial.toLowerCase().includes(q) ||
+        c.cnpj.replace(/\D/g, '').includes(q.replace(/\D/g, ''))
+      );
+    }
+    setFilteredClientes(result);
+  }, []);
 
   const load = useCallback(async () => {
     try {
       const data = await clientesApi.listar();
-      setClientes(data);
+      setAllClientes(data);
+      applyFilters(data, search, statusFilter);
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Falha ao carregar clientes');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [search, statusFilter, applyFilters]);
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    applyFilters(allClientes, search, statusFilter);
+  }, [search, statusFilter, allClientes, applyFilters]);
+
   const onRefresh = () => {
     setRefreshing(true);
-    load();
+    setLoading(true);
+    clientesApi.listar()
+      .then(data => { setAllClientes(data); applyFilters(data, search, statusFilter); })
+      .catch(err => Alert.alert('Erro', err.message || 'Falha ao carregar clientes'))
+      .finally(() => { setLoading(false); setRefreshing(false); });
   };
 
   const formatCNPJ = (cnpj: string) => {
@@ -49,7 +75,7 @@ export default function ListaClientesScreen() {
       onPress={() => navigation.navigate('DetalheCliente', { id: item.id })}
     >
       <View style={styles.cardHeader}>
-        <Text style={styles.razaoSocial}>{item.razaoSocial}</Text>
+        <Text style={styles.razaoSocial} numberOfLines={1}>{item.razaoSocial}</Text>
         {!item.isAtivo && <Text style={styles.inativo}>Inativo</Text>}
       </View>
       <Text style={styles.cnpj}>{formatCNPJ(item.cnpj)}</Text>
@@ -57,7 +83,7 @@ export default function ListaClientesScreen() {
     </TouchableOpacity>
   );
 
-  if (loading) {
+  if (loading && allClientes.length === 0) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -67,8 +93,33 @@ export default function ListaClientesScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.filters}>
+        <View style={styles.searchRow}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar por CNPJ ou Razão Social"
+            placeholderTextColor={colors.textDisabled}
+            value={search}
+            onChangeText={setSearch}
+            autoCapitalize="none"
+          />
+        </View>
+        <View style={styles.statusRow}>
+          {(['todos', 'ativo', 'inativo'] as const).map((s) => (
+            <TouchableOpacity
+              key={s}
+              style={[styles.statusBtn, statusFilter === s && styles.statusBtnActive]}
+              onPress={() => setStatusFilter(s)}
+            >
+              <Text style={[styles.statusText, statusFilter === s && styles.statusTextActive]}>
+                {s === 'todos' ? 'Todos' : s === 'ativo' ? 'Ativos' : 'Inativos'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
       <FlatList
-        data={clientes}
+        data={filteredClientes}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
@@ -82,6 +133,36 @@ export default function ListaClientesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+  filters: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  searchRow: { marginBottom: spacing.sm },
+  searchInput: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: colors.textPrimary,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statusRow: { flexDirection: 'row', gap: spacing.sm },
+  statusBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  statusBtnActive: { backgroundColor: colors.primary },
+  statusText: { fontSize: 13, fontWeight: '500', color: colors.textSecondary },
+  statusTextActive: { color: '#fff', fontWeight: '600' },
   list: { padding: spacing.md, gap: spacing.sm },
   card: {
     backgroundColor: colors.surface, borderRadius: borderRadius.md, padding: spacing.md,

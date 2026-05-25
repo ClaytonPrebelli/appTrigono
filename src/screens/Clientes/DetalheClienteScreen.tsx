@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert,
+  TouchableOpacity, Linking,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/AppNavigator';
@@ -45,6 +46,14 @@ export default function DetalheClienteScreen() {
     </View>
   );
 
+  const handleDownloadCert = () => {
+    if (cliente.linkCertificado) {
+      Linking.openURL(cliente.linkCertificado).catch(() =>
+        Alert.alert('Erro', 'Não foi possível abrir o link do certificado')
+      );
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.section}>
@@ -56,6 +65,7 @@ export default function DetalheClienteScreen() {
         <Field label="Natureza Jurídica" value={cliente.naturezaJuridica} />
         <Field label="Regime" value={cliente.regime} />
         <Field label="CNAE" value={cliente.descricaoCNAE} />
+        {cliente.isMei && <Text style={styles.badge}>MEI</Text>}
       </View>
 
       <View style={styles.section}>
@@ -73,13 +83,33 @@ export default function DetalheClienteScreen() {
         <Field label="Telefone" value={cliente.fone} />
         <Field label="Email" value={cliente.email} />
         <Field label="Representante" value={cliente.representante} />
+        <Field label="CPF Representante" value={cliente.cpfRepresentante} />
       </View>
 
-      {cliente.linkCertificado && (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Certificado Digital</Text>
+        <Field label="Senha do Certificado" value={cliente.senhaCertificado} />
+        <Field label="Validade" value={cliente.validadeCertificado} />
+        {cliente.linkCertificado ? (
+          <TouchableOpacity style={styles.downloadBtn} onPress={handleDownloadCert}>
+            <Text style={styles.downloadBtnText}>📥 Baixar Certificado</Text>
+          </TouchableOpacity>
+        ) : (
+          <Field label="Certificado" value="Nenhum certificado anexado" />
+        )}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Acessos</Text>
+        <Field label="Login NF" value={cliente.loginNF} />
+        <Field label="Senha NF" value={cliente.senhaNF} />
+        <Field label="Código Acesso SN" value={cliente.codigoAcessoSN} />
+      </View>
+
+      {cliente.observacoes && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Certificado Digital</Text>
-          <Field label="Link" value={cliente.linkCertificado} />
-          <Field label="Validade" value={cliente.validadeCertificado} />
+          <Text style={styles.sectionTitle}>Observações</Text>
+          <Text style={styles.observacoes}>{cliente.observacoes}</Text>
         </View>
       )}
     </ScrollView>
@@ -104,4 +134,15 @@ const styles = StyleSheet.create({
   label: { fontSize: 12, color: colors.textSecondary, marginBottom: 2, textTransform: 'uppercase' },
   value: { fontSize: 16, color: colors.textPrimary },
   errorText: { fontSize: 16, color: colors.textSecondary },
+  badge: {
+    fontSize: 12, color: colors.primary, fontWeight: '600',
+    backgroundColor: '#e0e7ff', paddingHorizontal: 8, paddingVertical: 2,
+    borderRadius: 4, alignSelf: 'flex-start', marginTop: spacing.xs,
+  },
+  downloadBtn: {
+    backgroundColor: colors.primary, borderRadius: borderRadius.md,
+    paddingVertical: 12, alignItems: 'center', marginTop: spacing.sm,
+  },
+  downloadBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  observacoes: { fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
 });

@@ -67,4 +67,8 @@ export const aberturaEmpresaApi = {
     );
     return response.data;
   },
+
+  getDownloadUrl: (documentoId: number): string => {
+    return `${apiClient.defaults.baseURL}AberturaEmpresa/DownloadDocumento?documentoId=${documentoId}`;
+  },
 };
