@@ -26,6 +26,9 @@ jobs:
       - name: Prebuild Expo (generate android project)
         run: npx expo prebuild --platform android --clean
 
+      - name: Disable Hermes (use JSC instead)
+        run: sed -i 's/hermesEnabled=true/hermesEnabled=false/' android/gradle.properties
+
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
