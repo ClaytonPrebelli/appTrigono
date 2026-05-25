@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  RefreshControl, ActivityIndicator, Alert, TextInput,
+  RefreshControl, ActivityIndicator, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -70,10 +70,13 @@ export default function ListaCobrancasScreen() {
     return new Date(dateStr).toLocaleDateString('pt-BR');
   };
 
-  const dashboardItems = [
+  const dashboardLinha1 = [
     { label: 'Abertas', value: pendentes.length, data: pendentes, color: colors.warning },
     { label: 'Vencidas', value: vencidas.length, data: vencidas, color: colors.error },
     { label: 'Pagas', value: pagas.length, data: pagas, color: colors.success },
+  ];
+
+  const dashboardLinha2 = [
     { label: 'Devido', value: formatCurrency(valorDevido), data: pendentes, color: colors.warning },
     { label: 'Pago', value: formatCurrency(valorPago), data: pagas, color: colors.success },
   ];
@@ -96,7 +99,7 @@ export default function ListaCobrancasScreen() {
         <View style={styles.cardFooter}>
           <Text style={styles.vencimento}>Venc: {formatDate(item.dataVencimento)}</Text>
           {item.referencia && <Text style={styles.ref}>{item.referencia}</Text>}
-          <Text style={[styles.pago, { color: item.isPago ? colors.success : colors.warning }]}>
+          <Text style={[styles.pago, { color: statusColor }]}>
             {item.isPago ? 'Pago' : isVencida ? 'Vencida' : 'Pendente'}
           </Text>
         </View>
@@ -128,21 +131,40 @@ export default function ListaCobrancasScreen() {
         </View>
       </View>
       <View style={styles.dashboard}>
-        {dashboardItems.map((item) => (
-          <TouchableOpacity
-            key={item.label}
-            style={[styles.dashCard, { borderTopColor: item.color }]}
-            onPress={() => {
-              const names = (item.data as Cobranca[]).map(c =>
-                `${c.descricao} - ${formatCurrency(c.valor)}`
-              ).join('\n');
-              Alert.alert(`${item.label} (${item.value})`, names || 'Nenhum');
-            }}
-          >
-            <Text style={[styles.dashValue, { color: item.color }]}>{item.value}</Text>
-            <Text style={styles.dashLabel}>{item.label}</Text>
-          </TouchableOpacity>
-        ))}
+        <View style={styles.dashRow}>
+          {dashboardLinha1.map((item) => (
+            <TouchableOpacity
+              key={item.label}
+              style={[styles.dashCard, { borderTopColor: item.color }]}
+              onPress={() => {
+                const names = (item.data as Cobranca[]).map(c =>
+                  `${c.descricao} - ${formatCurrency(c.valor)}`
+                ).join('\n');
+                Alert.alert(`${item.label} (${item.value})`, names || 'Nenhum');
+              }}
+            >
+              <Text style={[styles.dashValue, { color: item.color }]}>{item.value}</Text>
+              <Text style={styles.dashLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.dashRow}>
+          {dashboardLinha2.map((item) => (
+            <TouchableOpacity
+              key={item.label}
+              style={[styles.dashCard, styles.dashCardHalf, { borderTopColor: item.color }]}
+              onPress={() => {
+                const names = (item.data as Cobranca[]).map(c =>
+                  `${c.descricao} - ${formatCurrency(c.valor)}`
+                ).join('\n');
+                Alert.alert(`${item.label} (${item.value})`, names || 'Nenhum');
+              }}
+            >
+              <Text style={[styles.dashValue, { color: item.color }]}>{item.value}</Text>
+              <Text style={styles.dashLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
       <TouchableOpacity
         style={styles.addButton}
@@ -178,18 +200,17 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, minWidth: 120, alignItems: 'center',
   },
   mesLabel: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
-  dashboard: {
-    flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md,
-    marginTop: spacing.sm, marginBottom: spacing.xs,
-  },
+  dashboard: { paddingHorizontal: spacing.md, marginTop: spacing.sm, marginBottom: spacing.xs, gap: spacing.sm },
+  dashRow: { flexDirection: 'row', gap: spacing.sm },
   dashCard: {
     flex: 1, backgroundColor: colors.surface, borderRadius: borderRadius.md,
     paddingVertical: spacing.md, alignItems: 'center', borderTopWidth: 3,
     elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1, shadowRadius: 3,
   },
+  dashCardHalf: { flex: 0.5 },
   dashValue: { fontSize: 16, fontWeight: 'bold' },
-  dashLabel: { fontSize: 9, color: colors.textSecondary, marginTop: 2 },
+  dashLabel: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
   list: { paddingHorizontal: spacing.md, gap: spacing.sm, paddingBottom: spacing.xl },
   card: {
     backgroundColor: colors.surface, borderRadius: borderRadius.md, padding: spacing.md,

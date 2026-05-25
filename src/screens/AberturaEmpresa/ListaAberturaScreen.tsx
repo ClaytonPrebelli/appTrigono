@@ -102,7 +102,7 @@ export default function ListaAberturaScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Link Gerado</Text>
-            <Text style={styles.modalSubtitle}>Compartilhe este link com o cliente (longa pressão para copiar):</Text>
+            <Text style={styles.modalSubtitle}>Compartilhe este link com o cliente:</Text>
             <TextInput
               style={styles.modalLink}
               value={linkGerado}
@@ -154,9 +154,9 @@ const styles = StyleSheet.create({
     fontSize: 14, color: colors.textSecondary, marginBottom: spacing.md,
   },
   modalLink: {
-    fontSize: 14, color: colors.primary, backgroundColor: colors.background,
+    fontSize: 15, color: colors.textPrimary, backgroundColor: colors.surfaceHover,
     padding: spacing.md, borderRadius: borderRadius.sm, marginBottom: spacing.lg,
-    textAlign: 'center',
+    textAlign: 'center', borderWidth: 1, borderColor: colors.border,
   },
   modalBtnClose: {
     borderRadius: borderRadius.md, paddingVertical: 14, alignItems: 'center',

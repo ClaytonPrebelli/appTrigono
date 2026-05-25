@@ -190,8 +190,8 @@ const styles = StyleSheet.create({
   payBtnDisabled: { opacity: 0.7 },
   payBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   deleteBtn: {
-    backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: borderRadius.md,
-    paddingVertical: 14, alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: borderRadius.md,
+    paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.error,
   },
-  deleteBtnText: { color: colors.error, fontSize: 16, fontWeight: '600' },
+  deleteBtnText: { color: colors.error, fontSize: 16, fontWeight: '700' },
 });

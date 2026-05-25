@@ -20,35 +20,29 @@ export default function ListaClientesScreen() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'ativo' | 'inativo'>('todos');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await clientesApi.listar();
-        setClientes(data);
-      } catch (err: any) {
-        Alert.alert('Erro', err.message || 'Falha ao carregar clientes');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
+  const load = useCallback(async () => {
     try {
       const data = await clientesApi.listar();
       setClientes(data);
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Falha ao carregar clientes');
     } finally {
+      setLoading(false);
       setRefreshing(false);
     }
   }, []);
 
+  useEffect(() => { load(); }, [load]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    load();
+  }, [load]);
+
   const filteredClientes = useMemo(() => {
     let result = clientes;
-    if (statusFilter === 'ativo') result = result.filter(c => c.isAtivo);
-    else if (statusFilter === 'inativo') result = result.filter(c => !c.isAtivo);
+    if (statusFilter === 'ativo') result = result.filter(c => c.isAtivo === true);
+    else if (statusFilter === 'inativo') result = result.filter(c => c.isAtivo === false);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       result = result.filter(c =>
@@ -192,11 +186,11 @@ const styles = StyleSheet.create({
   statusText: { fontSize: 13, fontWeight: '500', color: '#fff' },
   statusTextActive: { color: '#fff', fontWeight: '600' },
   certDashboard: {
-    flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md,
+    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingHorizontal: spacing.md,
     marginTop: spacing.sm, marginBottom: spacing.xs,
   },
   certCard: {
-    flex: 1, backgroundColor: colors.surface, borderRadius: borderRadius.md,
+    width: '48%', backgroundColor: colors.surface, borderRadius: borderRadius.md,
     paddingVertical: spacing.md, alignItems: 'center', borderTopWidth: 3,
     elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1, shadowRadius: 3,
@@ -210,7 +204,7 @@ const styles = StyleSheet.create({
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs },
   razaoSocial: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, flex: 1 },
-  inativo: { fontSize: 12, color: colors.error, fontWeight: '600', backgroundColor: '#fef2f2', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
+  inativo: { fontSize: 12, color: colors.error, fontWeight: '600', backgroundColor: '#fff', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: colors.error },
   cnpj: { fontSize: 14, color: colors.textSecondary, marginBottom: 2 },
   contato: { fontSize: 13, color: colors.textDisabled },
   empty: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: spacing.xl, fontSize: 16 },

@@ -28,6 +28,24 @@ jobs:
       - name: Check types
         run: npx tsc --noEmit
 
+      - name: Set dynamic version and tag
+        id: version
+        run: |
+          PATCH=${{ github.run_number }}
+          NEW_VER="1.0.${PATCH}"
+          echo "version=${NEW_VER}" >> $GITHUB_OUTPUT
+          echo "tag=v${NEW_VER}" >> $GITHUB_OUTPUT
+
+      - name: Update app.json version
+        run: |
+          node -e "
+            const fs = require('fs');
+            const p = './app.json';
+            const c = JSON.parse(fs.readFileSync(p, 'utf8'));
+            c.expo.version = '${{ steps.version.outputs.version }}';
+            fs.writeFileSync(p, JSON.stringify(c, null, 2) + '\n');
+          "
+
       - name: Prebuild Expo
         run: npx expo prebuild --platform android --clean
 
@@ -68,10 +86,6 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
-
-      - name: Read version from app.json
-        id: version
-        run: echo "tag=v$(node -p "require('./app.json').expo.version")" >> $GITHUB_OUTPUT
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
