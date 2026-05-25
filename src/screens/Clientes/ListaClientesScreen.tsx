@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   RefreshControl, ActivityIndicator, Alert, TextInput,
@@ -16,6 +16,7 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 export default function ListaClientesScreen() {
   const navigation = useNavigation<NavProp>();
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [filteredClientes, setFilteredClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
@@ -37,19 +38,33 @@ export default function ListaClientesScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  const filteredClientes = useMemo(() => {
-    let result = clientes;
-    if (statusFilter === 'ativo') result = result.filter(c => c.isAtivo === true);
-    else if (statusFilter === 'inativo') result = result.filter(c => c.isAtivo === false);
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
+  const applyFilter = useCallback((texto: string, filtro: typeof statusFilter, lista: Cliente[]) => {
+    let result = lista;
+    if (filtro === 'ativo') result = result.filter(c => c.isAtivo === true);
+    else if (filtro === 'inativo') result = result.filter(c => c.isAtivo === false);
+    if (texto.trim()) {
+      const q = texto.trim().toLowerCase();
       result = result.filter(c =>
         (c.razaoSocial || '').toLowerCase().includes(q) ||
         (c.cnpj || '').replace(/\D/g, '').includes(q.replace(/\D/g, ''))
       );
     }
-    return result;
-  }, [clientes, search, statusFilter]);
+    setFilteredClientes(result);
+  }, []);
+
+  useEffect(() => {
+    applyFilter(search, statusFilter, clientes);
+  }, [clientes, statusFilter, applyFilter]);
+
+  const handleSearch = (texto: string) => {
+    setSearch(texto);
+    applyFilter(texto, statusFilter, clientes);
+  };
+
+  const handleStatusFilter = (filtro: typeof statusFilter) => {
+    setStatusFilter(filtro);
+    applyFilter(search, filtro, clientes);
+  };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -117,7 +132,7 @@ export default function ListaClientesScreen() {
           placeholder="Buscar por CNPJ ou Razão Social"
           placeholderTextColor="#94a3b8"
           value={search}
-          onChangeText={setSearch}
+          onChangeText={handleSearch}
           autoCapitalize="none"
         />
         <View style={styles.statusRow}>
@@ -125,7 +140,7 @@ export default function ListaClientesScreen() {
             <TouchableOpacity
               key={s}
               style={[styles.statusBtn, statusFilter === s && styles.statusBtnActive]}
-              onPress={() => setStatusFilter(s)}
+              onPress={() => handleStatusFilter(s)}
             >
               <Text style={[styles.statusText, statusFilter === s && styles.statusTextActive]}>
                 {s === 'todos' ? 'Todos' : s === 'ativo' ? 'Ativos' : 'Inativos'}
@@ -157,7 +172,9 @@ export default function ListaClientesScreen() {
           </TouchableOpacity>
         ))}
       </View>
+      <Text style={styles.debugCount}>{filteredClientes.length} de {clientes.length} clientes</Text>
       <FlatList
+        key={`lista-${search}`}
         data={filteredClientes}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
@@ -225,4 +242,5 @@ const styles = StyleSheet.create({
   cnpj: { fontSize: 14, color: colors.textSecondary, marginBottom: 2 },
   contato: { fontSize: 13, color: colors.textDisabled },
   empty: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: spacing.xl, fontSize: 16 },
+  debugCount: { color: 'rgba(255,255,255,0.5)', fontSize: 12, paddingHorizontal: spacing.md, marginBottom: 2 },
 });
