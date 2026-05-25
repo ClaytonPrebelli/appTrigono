@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -35,13 +35,16 @@ jobs:
           next_is_out=false
           output=""
           input=""
+          has_source_map=false
           for arg in "$@"; do
             if $next_is_out; then output="$arg"; next_is_out=false; continue; fi
             if [[ "$arg" == "-out" ]]; then next_is_out=true; continue; fi
+            if [[ "$arg" == "-output-source-map" ]]; then has_source_map=true; continue; fi
             if [[ "$arg" != -* ]] && [[ -z "$input" ]]; then input="$arg"; fi
           done
           if [ -n "$input" ] && [ -n "$output" ]; then
             cp "$input" "$output"
+            if $has_source_map; then echo "{}" > "${output}.map"; fi
           fi
           EOF
           chmod +x "$HERMESC"
