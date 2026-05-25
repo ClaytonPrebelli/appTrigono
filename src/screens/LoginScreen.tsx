@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, KeyboardAvoidingView, Platform, ActivityIndicator, Image, Dimensions,
+  Alert, KeyboardAvoidingView, Platform, ActivityIndicator, Image,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { colors, borderRadius, spacing } from '../theme';
@@ -10,6 +10,7 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
+  const [showSenha, setShowSenha] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -51,15 +52,23 @@ export default function LoginScreen() {
             autoCapitalize="none"
             editable={!loading}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            placeholderTextColor={colors.textDisabled}
-            value={senha}
-            onChangeText={setSenha}
-            secureTextEntry
-            editable={!loading}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Senha"
+              placeholderTextColor={colors.textDisabled}
+              value={senha}
+              onChangeText={setSenha}
+              secureTextEntry={!showSenha}
+              editable={!loading}
+            />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setShowSenha(!showSenha)}
+            >
+              <Text style={styles.eyeText}>{showSenha ? '🙈' : '👁️'}</Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleLogin}
@@ -98,6 +107,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: 14,
     fontSize: 16, marginBottom: spacing.md, color: colors.textPrimary,
   },
+  passwordContainer: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+  },
+  passwordInput: {
+    flex: 1, paddingHorizontal: spacing.md, paddingVertical: 14,
+    fontSize: 16, color: colors.textPrimary,
+  },
+  eyeButton: { paddingHorizontal: spacing.md, paddingVertical: 14 },
+  eyeText: { fontSize: 20 },
   button: {
     backgroundColor: colors.accent, borderRadius: borderRadius.md,
     paddingVertical: 14, alignItems: 'center', marginTop: spacing.sm,

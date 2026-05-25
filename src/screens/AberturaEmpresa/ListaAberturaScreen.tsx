@@ -37,6 +37,15 @@ export default function ListaAberturaScreen() {
     load();
   };
 
+  const handleGerarLink = async () => {
+    try {
+      const { link } = await aberturaEmpresaApi.gerarLink();
+      Alert.alert('Link gerado!', `Compartilhe este link com o cliente:\n\n${link}`);
+    } catch (err: any) {
+      Alert.alert('Erro', err.message || 'Falha ao gerar link');
+    }
+  };
+
   const renderItem = ({ item }: { item: AberturaEmpresa }) => (
     <TouchableOpacity
       style={styles.card}
@@ -69,6 +78,9 @@ export default function ListaAberturaScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.gerarLinkBtn} onPress={handleGerarLink}>
+        <Text style={styles.gerarLinkText}>🔗 Gerar Link do Formulário</Text>
+      </TouchableOpacity>
       <FlatList
         data={formularios}
         keyExtractor={(item) => String(item.id!)}
@@ -85,6 +97,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   list: { padding: spacing.md, gap: spacing.sm },
+  gerarLinkBtn: {
+    backgroundColor: colors.accent, borderRadius: borderRadius.md,
+    paddingVertical: 12, alignItems: 'center', margin: spacing.md,
+  },
+  gerarLinkText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   card: {
     backgroundColor: colors.surface, borderRadius: borderRadius.md, padding: spacing.md,
     elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3,
@@ -94,5 +111,5 @@ const styles = StyleSheet.create({
   status: { fontSize: 12, fontWeight: '600' },
   info: { fontSize: 14, color: colors.textSecondary, marginBottom: 2 },
   date: { fontSize: 12, color: colors.textDisabled, marginTop: spacing.xs },
-  empty: { textAlign: 'center', color: colors.textSecondary, marginTop: spacing.xl, fontSize: 16 },
+  empty: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: spacing.xl, fontSize: 16 },
 });

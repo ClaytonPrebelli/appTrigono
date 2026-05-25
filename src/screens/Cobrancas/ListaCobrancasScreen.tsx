@@ -52,6 +52,22 @@ export default function ListaCobrancasScreen() {
     return d.toLocaleDateString('pt-BR');
   };
 
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const pendentes = cobrancas.filter(c => !c.isPago);
+  const pagas = cobrancas.filter(c => c.isPago);
+  const vencidas = pendentes.filter(c => new Date(c.dataVencimento) < hoje);
+  const valorDevido = pendentes.reduce((acc, c) => acc + c.valor, 0);
+  const valorPago = pagas.reduce((acc, c) => acc + c.valor, 0);
+
+  const dashboardItems = [
+    { label: 'Abertas', value: pendentes.length, color: colors.warning },
+    { label: 'Vencidas', value: vencidas.length, color: colors.error },
+    { label: 'Pagas', value: pagas.length, color: colors.success },
+    { label: 'Devido', value: formatCurrency(valorDevido), color: colors.warning },
+    { label: 'Pago', value: formatCurrency(valorPago), color: colors.success },
+  ];
+
   const renderItem = ({ item }: { item: Cobranca }) => {
     const venc = new Date(item.dataVencimento);
     const isVencida = !item.isPago && venc < new Date();
@@ -92,7 +108,7 @@ export default function ListaCobrancasScreen() {
         <View style={styles.filterRow}>
           <TextInput
             style={styles.refInput}
-            placeholder="Filtrar por referência (MM/AAAA)"
+            placeholder="Referência (MM/AAAA)"
             placeholderTextColor={colors.textDisabled}
             value={referencia}
             onChangeText={setReferencia}
@@ -102,6 +118,14 @@ export default function ListaCobrancasScreen() {
             <Text style={styles.filterBtnText}>Filtrar</Text>
           </TouchableOpacity>
         </View>
+      </View>
+      <View style={styles.dashboard}>
+        {dashboardItems.map((item) => (
+          <View key={item.label} style={[styles.dashCard, { borderLeftColor: item.color }]}>
+            <Text style={[styles.dashValue, { color: item.color }]}>{item.value}</Text>
+            <Text style={styles.dashLabel}>{item.label}</Text>
+          </View>
+        ))}
       </View>
       <TouchableOpacity
         style={styles.addButton}
@@ -125,20 +149,29 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   filters: {
-    backgroundColor: colors.surface, padding: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+    backgroundColor: colors.surface, padding: spacing.sm,
   },
   filterRow: { flexDirection: 'row', gap: spacing.sm },
   refInput: {
     flex: 1, backgroundColor: colors.background, borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md, paddingVertical: 10, fontSize: 15,
-    color: colors.textPrimary, borderWidth: 1, borderColor: colors.border,
+    color: '#fff', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
   filterBtn: {
-    backgroundColor: colors.primary, borderRadius: borderRadius.md,
+    backgroundColor: colors.primaryLighter, borderRadius: borderRadius.md,
     paddingHorizontal: spacing.lg, justifyContent: 'center',
   },
   filterBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  dashboard: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs,
+    paddingHorizontal: spacing.md, marginTop: spacing.sm,
+  },
+  dashCard: {
+    width: '19%', backgroundColor: colors.surface, borderRadius: borderRadius.sm,
+    padding: spacing.xs, alignItems: 'center', borderLeftWidth: 3,
+  },
+  dashValue: { fontSize: 14, fontWeight: 'bold' },
+  dashLabel: { fontSize: 8, color: colors.textSecondary, marginTop: 1, textAlign: 'center' },
   list: { padding: spacing.md, gap: spacing.sm },
   card: {
     backgroundColor: colors.surface, borderRadius: borderRadius.md, padding: spacing.md,
@@ -152,9 +185,9 @@ const styles = StyleSheet.create({
   vencimento: { fontSize: 13, color: colors.textSecondary },
   ref: { fontSize: 13, color: colors.textDisabled },
   pago: { fontSize: 12, fontWeight: '600', marginLeft: 'auto' },
-  empty: { textAlign: 'center', color: colors.textSecondary, marginTop: spacing.xl, fontSize: 16 },
+  empty: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: spacing.xl, fontSize: 16 },
   addButton: {
-    backgroundColor: colors.primary, borderRadius: borderRadius.md,
+    backgroundColor: colors.primaryLighter, borderRadius: borderRadius.md,
     paddingVertical: 12, alignItems: 'center', margin: spacing.md,
   },
   addButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },

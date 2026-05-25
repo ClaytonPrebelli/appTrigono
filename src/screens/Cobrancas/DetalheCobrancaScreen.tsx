@@ -17,13 +17,44 @@ export default function DetalheCobrancaScreen() {
   const navigation = useNavigation<NavProp>();
   const [cobranca, setCobranca] = useState<Cobranca | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
     cobrancasApi.verPorId(route.params.id)
       .then(setCobranca)
       .catch((err) => Alert.alert('Erro', err.message || 'Falha ao carregar cobrança'))
       .finally(() => setLoading(false));
-  }, [route.params.id]);
+  };
+
+  useEffect(() => { load(); }, [route.params.id]);
+
+  const handleMarkAsPaid = () => {
+    Alert.alert('Confirmar', 'Marcar esta cobrança como paga?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Sim, está paga',
+        onPress: async () => {
+          if (!cobranca) return;
+          setPaying(true);
+          try {
+            await cobrancasApi.atualizar({
+              ...cobranca,
+              isPago: true,
+              dataPagamento: new Date().toISOString(),
+              metodoPagamento: 'Pago',
+            });
+            Alert.alert('Sucesso', 'Cobrança marcada como paga');
+            load();
+          } catch (err: any) {
+            Alert.alert('Erro', err.message || 'Falha ao atualizar cobrança');
+          } finally {
+            setPaying(false);
+          }
+        },
+      },
+    ]);
+  };
 
   const handleDelete = () => {
     Alert.alert('Confirmar', 'Deseja excluir esta cobrança?', [
@@ -108,6 +139,20 @@ export default function DetalheCobrancaScreen() {
         {cobranca.metodoPagamento && <Field label="Método" value={cobranca.metodoPagamento} />}
       </View>
 
+      {!cobranca.isPago && (
+        <TouchableOpacity
+          style={[styles.payBtn, paying && styles.payBtnDisabled]}
+          onPress={handleMarkAsPaid}
+          disabled={paying}
+        >
+          {paying ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.payBtnText}>✓ Marcar como Paga</Text>
+          )}
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
         <Text style={styles.deleteBtnText}>Excluir Cobrança</Text>
       </TouchableOpacity>
@@ -138,9 +183,15 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 16, color: colors.textSecondary },
   valorLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: 4 },
   valorValue: { fontSize: 32, fontWeight: 'bold', color: colors.textPrimary },
+  payBtn: {
+    backgroundColor: colors.success, borderRadius: borderRadius.md,
+    paddingVertical: 14, alignItems: 'center',
+  },
+  payBtnDisabled: { opacity: 0.7 },
+  payBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   deleteBtn: {
     backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: borderRadius.md,
-    paddingVertical: 14, alignItems: 'center', marginTop: spacing.sm,
+    paddingVertical: 14, alignItems: 'center',
   },
   deleteBtnText: { color: colors.error, fontSize: 16, fontWeight: '600' },
 });

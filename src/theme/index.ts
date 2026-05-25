@@ -7,7 +7,7 @@ export const colors = {
   success: '#10b981',
   warning: '#f59e0b',
   error: '#ef4444',
-  background: '#f8fafc',
+  background: '#0c2183',
   surface: '#ffffff',
   surfaceHover: '#f1f5f9',
   textPrimary: '#0f172a',

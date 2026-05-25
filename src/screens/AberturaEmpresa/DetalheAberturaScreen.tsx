@@ -148,10 +148,8 @@ export default function DetalheAberturaScreen() {
               onPress={() => handleDownload(doc.id, doc.nomeArquivo)}
             >
               <View style={styles.docInfo}>
-                <Text style={styles.docName}>{doc.nomeArquivo}</Text>
-                <Text style={styles.docMeta}>
-                  {doc.tipoDocumento || 'Sem tipo'} | {(doc.tamanhoBytes / 1024).toFixed(1)} KB
-                </Text>
+                <Text style={styles.docName}>{doc.tipoDocumento || 'Documento'}</Text>
+                <Text style={styles.docMeta}>{(doc.tamanhoBytes / 1024).toFixed(1)} KB</Text>
                 {doc.observacao && <Text style={styles.docObs}>{doc.observacao}</Text>}
               </View>
               <Text style={styles.downloadIcon}>📥</Text>

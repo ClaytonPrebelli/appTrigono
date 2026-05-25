@@ -35,32 +35,50 @@ export default function ListaClientesScreen() {
     setFilteredClientes(result);
   }, []);
 
+  useEffect(() => {
+    applyFilters(allClientes, search, statusFilter);
+  }, [search, statusFilter, allClientes, applyFilters]);
+
   const load = useCallback(async () => {
     try {
       const data = await clientesApi.listar();
       setAllClientes(data);
-      applyFilters(data, search, statusFilter);
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Falha ao carregar clientes');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [search, statusFilter, applyFilters]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
-
-  useEffect(() => {
-    applyFilters(allClientes, search, statusFilter);
-  }, [search, statusFilter, allClientes, applyFilters]);
 
   const onRefresh = () => {
     setRefreshing(true);
     setLoading(true);
-    clientesApi.listar()
-      .then(data => { setAllClientes(data); applyFilters(data, search, statusFilter); })
-      .catch(err => Alert.alert('Erro', err.message || 'Falha ao carregar clientes'))
-      .finally(() => { setLoading(false); setRefreshing(false); });
+    load();
+  };
+
+  const certStats = () => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    let vencidos = 0, aVencer = 0, validos = 0, semCert = 0;
+    allClientes.forEach(c => {
+      if (!c.isAtivo) return;
+      if (!c.validadeCertificado || !c.linkCertificado) { semCert++; return; }
+      const venc = new Date(c.validadeCertificado);
+      venc.setHours(0, 0, 0, 0);
+      const diff = Math.ceil((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+      if (diff < 0) vencidos++;
+      else if (diff <= 30) aVencer++;
+      else validos++;
+    });
+    return [
+      { label: 'Vencidos', value: vencidos, color: colors.error },
+      { label: 'A Vencer', value: aVencer, color: colors.warning },
+      { label: 'Válidos', value: validos, color: colors.success },
+      { label: 'Sem Cert.', value: semCert, color: colors.textSecondary },
+    ];
   };
 
   const formatCNPJ = (cnpj: string) => {
@@ -94,16 +112,14 @@ export default function ListaClientesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.filters}>
-        <View style={styles.searchRow}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar por CNPJ ou Razão Social"
-            placeholderTextColor={colors.textDisabled}
-            value={search}
-            onChangeText={setSearch}
-            autoCapitalize="none"
-          />
-        </View>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar por CNPJ ou Razão Social"
+          placeholderTextColor={colors.textDisabled}
+          value={search}
+          onChangeText={setSearch}
+          autoCapitalize="none"
+        />
         <View style={styles.statusRow}>
           {(['todos', 'ativo', 'inativo'] as const).map((s) => (
             <TouchableOpacity
@@ -117,6 +133,14 @@ export default function ListaClientesScreen() {
             </TouchableOpacity>
           ))}
         </View>
+      </View>
+      <View style={styles.certDashboard}>
+        {certStats().map((stat) => (
+          <View key={stat.label} style={[styles.certCard, { borderLeftColor: stat.color }]}>
+            <Text style={[styles.certValue, { color: stat.color }]}>{stat.value}</Text>
+            <Text style={styles.certLabel}>{stat.label}</Text>
+          </View>
+        ))}
       </View>
       <FlatList
         data={filteredClientes}
@@ -138,31 +162,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
-  searchRow: { marginBottom: spacing.sm },
   searchInput: {
     backgroundColor: colors.background,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     fontSize: 15,
-    color: colors.textPrimary,
+    color: '#fff',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.2)',
+    marginBottom: spacing.sm,
   },
   statusRow: { flexDirection: 'row', gap: spacing.sm },
   statusBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    backgroundColor: colors.background,
+    flex: 1, paddingVertical: 8, borderRadius: borderRadius.md,
+    alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)',
   },
-  statusBtnActive: { backgroundColor: colors.primary },
-  statusText: { fontSize: 13, fontWeight: '500', color: colors.textSecondary },
-  statusTextActive: { color: '#fff', fontWeight: '600' },
+  statusBtnActive: { backgroundColor: '#fff' },
+  statusText: { fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.8)' },
+  statusTextActive: { color: colors.primary, fontWeight: '600' },
+  certDashboard: {
+    flexDirection: 'row', gap: spacing.xs, marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+  },
+  certCard: {
+    flex: 1, backgroundColor: colors.surface, borderRadius: borderRadius.sm,
+    padding: spacing.sm, alignItems: 'center', borderLeftWidth: 3,
+  },
+  certValue: { fontSize: 20, fontWeight: 'bold' },
+  certLabel: { fontSize: 9, color: colors.textSecondary, marginTop: 2, textAlign: 'center' },
   list: { padding: spacing.md, gap: spacing.sm },
   card: {
     backgroundColor: colors.surface, borderRadius: borderRadius.md, padding: spacing.md,
@@ -173,5 +202,5 @@ const styles = StyleSheet.create({
   inativo: { fontSize: 12, color: colors.error, fontWeight: '600', backgroundColor: '#fef2f2', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
   cnpj: { fontSize: 14, color: colors.textSecondary, marginBottom: 2 },
   contato: { fontSize: 13, color: colors.textDisabled },
-  empty: { textAlign: 'center', color: colors.textSecondary, marginTop: spacing.xl, fontSize: 16 },
+  empty: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: spacing.xl, fontSize: 16 },
 });
