@@ -1,6 +1,5 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createDrawerNavigator } from '@react-navigation/drawer';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
@@ -16,39 +15,22 @@ import DetalheAberturaScreen from '../screens/AberturaEmpresa/DetalheAberturaScr
 
 export type RootStackParamList = {
   Login: undefined;
-  Main: undefined;
+  Dashboard: undefined;
+  Clientes: undefined;
+  Cobrancas: undefined;
+  AberturaEmpresa: undefined;
   DetalheCliente: { id: number };
   RegistroCobranca: { id?: number };
   DetalheAbertura: { id: number };
 };
 
-export type DrawerParamList = {
-  Dashboard: undefined;
-  Clientes: undefined;
-  Cobrancas: undefined;
-  AberturaEmpresa: undefined;
-};
-
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const Drawer = createDrawerNavigator<DrawerParamList>();
 
-function DrawerNavigator() {
-  return (
-    <Drawer.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.primary },
-        headerTintColor: '#fff',
-        drawerActiveTintColor: colors.primary,
-        drawerInactiveTintColor: colors.textSecondary,
-      }}
-    >
-      <Drawer.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Início' }} />
-      <Drawer.Screen name="Clientes" component={ListaClientesScreen} options={{ title: 'Clientes' }} />
-      <Drawer.Screen name="Cobrancas" component={ListaCobrancasScreen} options={{ title: 'Cobranças' }} />
-      <Drawer.Screen name="AberturaEmpresa" component={ListaAberturaScreen} options={{ title: 'Abertura de Empresa' }} />
-    </Drawer.Navigator>
-  );
-}
+const screenOptions = {
+  headerStyle: { backgroundColor: colors.primary },
+  headerTintColor: '#fff',
+  headerTitleStyle: { fontWeight: '600' as const },
+};
 
 export default function AppNavigator() {
   const { user, loading } = useAuth();
@@ -67,22 +49,13 @@ export default function AppNavigator() {
         <Stack.Screen name="Login" component={LoginScreen} />
       ) : (
         <>
-          <Stack.Screen name="Main" component={DrawerNavigator} />
-          <Stack.Screen
-            name="DetalheCliente"
-            component={DetalheClienteScreen}
-            options={{ headerShown: true, title: 'Detalhe do Cliente', headerStyle: { backgroundColor: colors.primary }, headerTintColor: '#fff' }}
-          />
-          <Stack.Screen
-            name="RegistroCobranca"
-            component={RegistroCobrancaScreen}
-            options={{ headerShown: true, title: 'Registrar Cobrança', headerStyle: { backgroundColor: colors.primary }, headerTintColor: '#fff' }}
-          />
-          <Stack.Screen
-            name="DetalheAbertura"
-            component={DetalheAberturaScreen}
-            options={{ headerShown: true, title: 'Detalhe da Abertura', headerStyle: { backgroundColor: colors.primary }, headerTintColor: '#fff' }}
-          />
+          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <Stack.Screen name="Clientes" component={ListaClientesScreen} options={{ headerShown: true, title: 'Clientes', ...screenOptions }} />
+          <Stack.Screen name="Cobrancas" component={ListaCobrancasScreen} options={{ headerShown: true, title: 'Cobranças', ...screenOptions }} />
+          <Stack.Screen name="AberturaEmpresa" component={ListaAberturaScreen} options={{ headerShown: true, title: 'Abertura de Empresa', ...screenOptions }} />
+          <Stack.Screen name="DetalheCliente" component={DetalheClienteScreen} options={{ headerShown: true, title: 'Detalhe do Cliente', ...screenOptions }} />
+          <Stack.Screen name="RegistroCobranca" component={RegistroCobrancaScreen} options={{ headerShown: true, title: 'Nova Cobrança', ...screenOptions }} />
+          <Stack.Screen name="DetalheAbertura" component={DetalheAberturaScreen} options={{ headerShown: true, title: 'Detalhe da Abertura', ...screenOptions }} />
         </>
       )}
     </Stack.Navigator>

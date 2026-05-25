@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { DrawerParamList } from '../navigation/AppNavigator';
+import { RootStackParamList } from '../navigation/AppNavigator';
 import { colors, spacing, borderRadius } from '../theme';
 
-type NavProp = DrawerNavigationProp<DrawerParamList>;
+type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function DashboardScreen() {
   const { user, signOut } = useAuth();

@@ -38,25 +38,4 @@ declare module '@react-navigation/native-stack' {
   };
 }
 
-declare module '@react-navigation/drawer' {
-  import { ComponentType } from 'react';
 
-  export function createDrawerNavigator<TParamList extends Record<string, object | undefined> = any>(): {
-    Navigator: ComponentType<any>;
-    Screen: ComponentType<any>;
-  };
-
-  export type DrawerNavigationProp<TParamList extends Record<string, object | undefined> = any, TName extends keyof TParamList = any> = {
-    navigate: (name: any, params?: any) => void;
-    goBack: () => void;
-    toggleDrawer: () => void;
-    openDrawer: () => void;
-    closeDrawer: () => void;
-    setParams: (params: Partial<any>) => void;
-  };
-
-  export type DrawerScreenProps<TParamList extends Record<string, object | undefined> = any, TName extends keyof TParamList = any> = {
-    navigation: DrawerNavigationProp<TParamList, TName>;
-    route: import('@react-navigation/native').RouteProp<TParamList, TName>;
-  };
-}
