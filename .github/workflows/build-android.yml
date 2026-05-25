@@ -31,18 +31,14 @@ jobs:
           HERMESC=node_modules/react-native/sdks/hermesc/linux64-bin/hermesc
           cat > "$HERMESC" << 'EOF'
           #!/bin/bash
-          # Hermes compiler wrapper: copies JS bundle as-is (no bytecode compile)
-          args=("$@")
-          input=""
+          # Invocation: hermesc -w -emit-binary ... -out OUTPUT INPUT [-O -output-source-map]
+          next_is_out=false
           output=""
-          for ((i=0; i<${#args[@]}; i++)); do
-            if [[ "${args[$i]}" == "-out" ]] && [[ $i+1 -lt ${#args[@]} ]]; then
-              output="${args[$i+1]}"
-            elif [[ "${args[$i]}" == "-output-source-map" ]] || [[ "${args[$i]}" == "-O" ]]; then
-              true
-            elif [[ "${args[$i]}" != -* ]] && [[ -z "$input" ]]; then
-              input="${args[$i]}"
-            fi
+          input=""
+          for arg in "$@"; do
+            if $next_is_out; then output="$arg"; next_is_out=false; continue; fi
+            if [[ "$arg" == "-out" ]]; then next_is_out=true; continue; fi
+            if [[ "$arg" != -* ]] && [[ -z "$input" ]]; then input="$arg"; fi
           done
           if [ -n "$input" ] && [ -n "$output" ]; then
             cp "$input" "$output"
