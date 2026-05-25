@@ -44,7 +44,7 @@ jobs:
           done
           if [ -n "$input" ] && [ -n "$output" ]; then
             cp "$input" "$output"
-            if $has_source_map; then echo '{"version":3,"names":[],"mappings":""}' > "${output}.map"; fi
+            if $has_source_map; then echo '{"version":3,"sources":[],"names":[],"mappings":""}' > "${output}.map"; fi
           fi
           EOF
           chmod +x "$HERMESC"
