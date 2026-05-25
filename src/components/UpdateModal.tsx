@@ -18,12 +18,11 @@ export default function UpdateModal({
   visible, versaoAtual, versaoNova, downloadUrl, nomeArquivo, onClose,
 }: Props) {
   const [baixando, setBaixando] = useState(false);
-  const [progresso, setProgresso] = useState(0);
 
   const handleAtualizar = async () => {
     setBaixando(true);
     try {
-      await baixarEInstalar(downloadUrl, nomeArquivo, setProgresso);
+      await baixarEInstalar(downloadUrl);
     } catch {
       setBaixando(false);
     }
@@ -45,7 +44,7 @@ export default function UpdateModal({
           {baixando ? (
             <View style={styles.progressArea}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={styles.progressText}>{progresso}%</Text>
+              <Text style={styles.progressText}>Abrindo navegador para download...</Text>
             </View>
           ) : (
             <View style={styles.actions}>
@@ -77,7 +76,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: colors.primary, fontWeight: '600', marginBottom: spacing.sm },
   desc: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.lg },
   progressArea: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
-  progressText: { fontSize: 16, fontWeight: '600', color: colors.primary },
+  progressText: { fontSize: 14, color: colors.textSecondary },
   actions: { width: '100%', gap: spacing.sm },
   btnUpdate: {
     backgroundColor: colors.primary, borderRadius: borderRadius.md,

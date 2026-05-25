@@ -1,4 +1,3 @@
-import * as FileSystem from 'expo-file-system/legacy';
 import { Linking } from 'react-native';
 
 const { version: APP_VERSION } = require('../../app.json').expo;
@@ -56,21 +55,6 @@ function isVersaoNova(atual: string, nova: string): boolean {
   return false;
 }
 
-export async function baixarEInstalar(
-  downloadUrl: string,
-  nomeArquivo: string,
-  onProgress?: (percent: number) => void
-): Promise<void> {
-  const fileUri = `${FileSystem.cacheDirectory}${nomeArquivo}`;
-
-  const info = await FileSystem.getInfoAsync(fileUri);
-  if (info.exists) {
-    const contentUri = await FileSystem.getContentUriAsync(fileUri);
-    await Linking.openURL(contentUri);
-    return;
-  }
-
-  const result = await FileSystem.downloadAsync(downloadUrl, fileUri);
-  const contentUri = await FileSystem.getContentUriAsync(result.uri);
-  await Linking.openURL(contentUri);
+export async function baixarEInstalar(downloadUrl: string): Promise<void> {
+  await Linking.openURL(downloadUrl);
 }
