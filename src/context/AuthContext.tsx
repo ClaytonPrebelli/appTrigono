@@ -27,7 +27,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (stored) {
         setUser(JSON.parse(stored));
       }
-    } catch {
+    } catch (e) {
+      console.error('Failed to load user from storage:', e);
     } finally {
       setLoading(false);
     }

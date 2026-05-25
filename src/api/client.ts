@@ -1,5 +1,4 @@
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = 'https://apitrigono.prebellisolucoes.com/';
 
@@ -8,14 +7,6 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-});
-
-apiClient.interceptors.request.use(async (config) => {
-  const user = await AsyncStorage.getItem('@trigono_user');
-  if (user) {
-    config.headers.Authorization = `Bearer ${user}`;
-  }
-  return config;
 });
 
 apiClient.interceptors.response.use(
