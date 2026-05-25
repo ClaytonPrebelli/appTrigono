@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Portal Trigono",
+    "slug": "portal-trigono",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0c2183"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.trigonoconsultoria.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0c2183"
+      },
+      "package": "com.trigonoconsultoria.app"
+    },
+    "extra": {
+      "apiUrl": "https://apitrigono.prebellisolucoes.com/",
+      "urlCNPJ": "https://open.cnpja.com/office/"
+    }
+  }
+}
