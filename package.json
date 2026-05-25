@@ -1,7 +1,7 @@
 {
   "name": "portal-trigono",
   "version": "1.0.0",
-  "main": "expo/AppEntry.js",
+  "main": "index.ts",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "babel-preset-expo": "^56.0.12",
     "typescript": "~5.9.2"
   },
   "private": true
