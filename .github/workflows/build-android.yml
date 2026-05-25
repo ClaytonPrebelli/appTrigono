@@ -7,6 +7,7 @@ on:
 
 env:
   APK_PATH: android/app/build/outputs/apk/release/app-release.apk
+  APK_NAME: app-trigono.apk
 
 jobs:
   build:
@@ -87,11 +88,15 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
+      - name: Rename APK
+        run: |
+          cp "${{ env.APK_PATH }}" "${{ env.APK_NAME }}"
+
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
           name: portal-trigono-apk
-          path: ${{ env.APK_PATH }}
+          path: ${{ env.APK_NAME }}
 
       - name: Delete existing release with same tag (if any)
         env:
@@ -104,7 +109,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${{ steps.version.outputs.tag }}" \
-            "${{ env.APK_PATH }}" \
+            "${{ env.APK_NAME }}" \
             --title "${{ steps.version.outputs.tag }}" \
             --notes "Build automático #${{ github.run_number }}" \
             --generate-notes

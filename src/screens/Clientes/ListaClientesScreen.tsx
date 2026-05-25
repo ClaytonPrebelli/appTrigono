@@ -130,14 +130,19 @@ export default function ListaClientesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.filters}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar por CNPJ ou Razão Social"
-          placeholderTextColor="#94a3b8"
-          value={search}
-          onChangeText={handleSearch}
-          autoCapitalize="none"
-        />
+        <View style={styles.searchRow}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar por CNPJ ou Razão Social"
+            placeholderTextColor="#94a3b8"
+            value={search}
+            onChangeText={setSearch}
+            autoCapitalize="none"
+          />
+          <TouchableOpacity style={styles.searchBtn} onPress={() => handleSearch(search)}>
+            <Text style={styles.searchBtnText}>Buscar</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.statusRow}>
           {(['todos', 'ativo', 'inativo'] as const).map((s) => (
             <TouchableOpacity
@@ -207,13 +212,18 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     borderRadius: borderRadius.md,
   },
+  searchRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
   searchInput: {
-    backgroundColor: '#fff', borderRadius: borderRadius.md,
+    flex: 1, backgroundColor: '#fff', borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md, paddingVertical: 10,
     fontSize: 15, color: colors.textPrimary,
     borderWidth: 1, borderColor: colors.border,
-    marginBottom: spacing.sm,
   },
+  searchBtn: {
+    backgroundColor: colors.primary, borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.lg, justifyContent: 'center',
+  },
+  searchBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   statusRow: { flexDirection: 'row', gap: spacing.sm },
   statusBtn: {
     flex: 1, paddingVertical: 8, borderRadius: borderRadius.md,
