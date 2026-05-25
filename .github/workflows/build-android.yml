@@ -5,6 +5,9 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+env:
+  APK_PATH: android/app/build/outputs/apk/release/app-release.apk
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -64,8 +67,28 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
-      - name: Upload APK
+      - name: Read version from app.json
+        id: version
+        run: echo "tag=v$(node -p "require('./app.json').expo.version")" >> $GITHUB_OUTPUT
+
+      - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
           name: portal-trigono-apk
-          path: android/app/build/outputs/apk/release/*.apk
+          path: ${{ env.APK_PATH }}
+
+      - name: Delete existing release with same tag (if any)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete "${{ steps.version.outputs.tag }}" --yes --cleanup-tag 2>/dev/null || true
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            "${{ env.APK_PATH }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --notes "Build automático #${{ github.run_number }}" \
+            --generate-notes
