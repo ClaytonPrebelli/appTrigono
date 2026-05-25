@@ -6,7 +6,9 @@ import {
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { Cliente } from '../../types/cliente';
+import { Cobranca } from '../../types/cobranca';
 import { clientesApi } from '../../api/clientes';
+import { cobrancasApi } from '../../api/cobrancas';
 import { colors, spacing, borderRadius } from '../../theme';
 
 type DetalheRoute = RouteProp<RootStackParamList, 'DetalheCliente'>;
@@ -15,10 +17,16 @@ export default function DetalheClienteScreen() {
   const route = useRoute<DetalheRoute>();
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
 
   useEffect(() => {
     clientesApi.verPorId(route.params.id)
-      .then(setCliente)
+      .then((c) => {
+        setCliente(c);
+        cobrancasApi.listarPorCliente(c.id, 1, 50)
+          .then(setCobrancas)
+          .catch(() => {});
+      })
       .catch((err) => Alert.alert('Erro', err.message || 'Falha ao carregar cliente'))
       .finally(() => setLoading(false));
   }, [route.params.id]);
@@ -106,6 +114,36 @@ export default function DetalheClienteScreen() {
         <Field label="Código Acesso SN" value={cliente.codigoAcessoSN} />
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Cobranças ({cobrancas.length})</Text>
+        {cobrancas.length === 0 ? (
+          <Text style={styles.emptyText}>Nenhuma cobrança encontrada</Text>
+        ) : (
+          cobrancas.map((c) => {
+            const venc = new Date(c.dataVencimento);
+            const isVencida = !c.isPago && venc < new Date();
+            const statusColor = c.isPago ? colors.success : isVencida ? colors.error : colors.warning;
+            return (
+              <View key={c.id} style={styles.cobrancaCard}>
+                <View style={styles.cobrancaHeader}>
+                  <Text style={styles.cobrancaDesc} numberOfLines={1}>{c.descricao}</Text>
+                  <Text style={[styles.cobrancaValor, { color: statusColor }]}>
+                    R$ {c.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </Text>
+                </View>
+                <View style={styles.cobrancaFooter}>
+                  <Text style={styles.cobrancaInfo}>Venc: {new Date(c.dataVencimento).toLocaleDateString('pt-BR')}</Text>
+                  {c.referencia && <Text style={styles.cobrancaInfo}>{c.referencia}</Text>}
+                  <Text style={[styles.cobrancaStatus, { color: statusColor }]}>
+                    {c.isPago ? 'Pago' : isVencida ? 'Vencida' : 'Pendente'}
+                  </Text>
+                </View>
+              </View>
+            );
+          })
+        )}
+      </View>
+
       {cliente.observacoes && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Observações</Text>
@@ -134,6 +172,17 @@ const styles = StyleSheet.create({
   label: { fontSize: 12, color: colors.textSecondary, marginBottom: 2, textTransform: 'uppercase' },
   value: { fontSize: 16, color: colors.textPrimary },
   errorText: { fontSize: 16, color: colors.textSecondary },
+  emptyText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', paddingVertical: spacing.md },
+  cobrancaCard: {
+    backgroundColor: colors.background, borderRadius: borderRadius.md,
+    padding: spacing.md, marginBottom: spacing.sm,
+  },
+  cobrancaHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  cobrancaDesc: { fontSize: 15, fontWeight: '600', color: colors.textPrimary, flex: 1, marginRight: spacing.sm },
+  cobrancaValor: { fontSize: 15, fontWeight: '700' },
+  cobrancaFooter: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
+  cobrancaInfo: { fontSize: 12, color: colors.textSecondary },
+  cobrancaStatus: { fontSize: 12, fontWeight: '600', marginLeft: 'auto' },
   badge: {
     fontSize: 12, color: colors.primary, fontWeight: '600',
     backgroundColor: '#e0e7ff', paddingHorizontal: 8, paddingVertical: 2,
