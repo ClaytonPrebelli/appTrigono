@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   RefreshControl, ActivityIndicator, Alert, TextInput,
@@ -39,7 +39,7 @@ export default function ListaClientesScreen() {
     load();
   }, [load]);
 
-  const filteredClientes = useMemo(() => {
+  const filteredClientes = (() => {
     let result = clientes;
     if (statusFilter === 'ativo') result = result.filter(c => c.isAtivo === true);
     else if (statusFilter === 'inativo') result = result.filter(c => c.isAtivo === false);
@@ -51,7 +51,7 @@ export default function ListaClientesScreen() {
       );
     }
     return result;
-  }, [clientes, search, statusFilter]);
+  })();
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
@@ -147,6 +147,7 @@ export default function ListaClientesScreen() {
         ))}
       </View>
       <FlatList
+        key={`filtro-${search}-${statusFilter}`}
         data={filteredClientes}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}

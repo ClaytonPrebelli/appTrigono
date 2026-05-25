@@ -68,7 +68,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.primary },
   container: { flex: 1, backgroundColor: colors.background },
-  content: { paddingBottom: spacing.xl },
+  content: { paddingBottom: spacing.xl * 2 },
   header: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.lg,
@@ -84,9 +84,10 @@ const styles = StyleSheet.create({
     fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '500',
   },
   cardGrid: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     marginTop: -spacing.lg,
-    gap: spacing.md,
+    gap: spacing.lg,
+    paddingTop: spacing.sm,
   },
   card: {
     backgroundColor: colors.surface,
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowRadius: 8,
   },
   cardIcon: { fontSize: 32, marginRight: spacing.md },
   cardText: { flex: 1 },
@@ -111,8 +112,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.xl,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.xl * 1.5,
     backgroundColor: '#fff',
     borderRadius: borderRadius.md,
     paddingVertical: 16,

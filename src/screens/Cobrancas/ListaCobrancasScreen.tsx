@@ -130,6 +130,7 @@ export default function ListaCobrancasScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
       <View style={styles.dashboard}>
         <View style={styles.dashRow}>
           {dashboardLinha1.map((item) => (
@@ -166,6 +167,7 @@ export default function ListaCobrancasScreen() {
           ))}
         </View>
       </View>
+
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => navigation.navigate('RegistroCobranca', {})}
@@ -189,7 +191,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   filters: {
     backgroundColor: colors.surface, borderRadius: borderRadius.md,
-    padding: spacing.sm, marginHorizontal: spacing.md, marginTop: spacing.sm,
+    padding: spacing.md, marginHorizontal: spacing.md, marginTop: spacing.sm,
   },
   mesNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   mesArrow: { padding: spacing.sm },
@@ -200,17 +202,19 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, minWidth: 120, alignItems: 'center',
   },
   mesLabel: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
-  dashboard: { paddingHorizontal: spacing.md, marginTop: spacing.sm, marginBottom: spacing.xs, gap: spacing.sm },
-  dashRow: { flexDirection: 'row', gap: spacing.sm },
+  dashboard: {
+    paddingHorizontal: spacing.md, marginTop: spacing.md, marginBottom: spacing.sm, gap: spacing.lg,
+  },
+  dashRow: { flexDirection: 'row', gap: spacing.md },
   dashCard: {
     flex: 1, backgroundColor: colors.surface, borderRadius: borderRadius.md,
-    paddingVertical: spacing.md, alignItems: 'center', borderTopWidth: 3,
+    paddingVertical: spacing.lg, alignItems: 'center', borderTopWidth: 3,
     elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1, shadowRadius: 3,
   },
   dashCardHalf: { flex: 0.5 },
-  dashValue: { fontSize: 16, fontWeight: 'bold' },
-  dashLabel: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
+  dashValue: { fontSize: 18, fontWeight: 'bold' },
+  dashLabel: { fontSize: 12, color: colors.textSecondary, marginTop: 2, textTransform: 'uppercase' },
   list: { paddingHorizontal: spacing.md, gap: spacing.sm, paddingBottom: spacing.xl },
   card: {
     backgroundColor: colors.surface, borderRadius: borderRadius.md, padding: spacing.md,
