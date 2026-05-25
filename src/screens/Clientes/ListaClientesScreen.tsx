@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   RefreshControl, ActivityIndicator, Alert, TextInput,
@@ -14,72 +14,75 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ListaClientesScreen() {
   const navigation = useNavigation<NavProp>();
-  const [allClientes, setAllClientes] = useState<Cliente[]>([]);
-  const [filteredClientes, setFilteredClientes] = useState<Cliente[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'ativo' | 'inativo'>('todos');
 
-  const applyFilters = useCallback((data: Cliente[], s: string, st: string) => {
-    let result = data;
-    if (st === 'ativo') result = result.filter(c => c.isAtivo);
-    else if (st === 'inativo') result = result.filter(c => !c.isAtivo);
-    if (s.trim()) {
-      const q = s.trim().toLowerCase();
-      result = result.filter(c =>
-        c.razaoSocial.toLowerCase().includes(q) ||
-        c.cnpj.replace(/\D/g, '').includes(q.replace(/\D/g, ''))
-      );
-    }
-    setFilteredClientes(result);
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await clientesApi.listar();
+        setClientes(data);
+      } catch (err: any) {
+        Alert.alert('Erro', err.message || 'Falha ao carregar clientes');
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  useEffect(() => {
-    applyFilters(allClientes, search, statusFilter);
-  }, [search, statusFilter, allClientes, applyFilters]);
-
-  const load = useCallback(async () => {
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
     try {
       const data = await clientesApi.listar();
-      setAllClientes(data);
+      setClientes(data);
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Falha ao carregar clientes');
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  const filteredClientes = useMemo(() => {
+    let result = clientes;
+    if (statusFilter === 'ativo') result = result.filter(c => c.isAtivo);
+    else if (statusFilter === 'inativo') result = result.filter(c => !c.isAtivo);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter(c =>
+        (c.razaoSocial || '').toLowerCase().includes(q) ||
+        (c.cnpj || '').replace(/\D/g, '').includes(q.replace(/\D/g, ''))
+      );
+    }
+    return result;
+  }, [clientes, search, statusFilter]);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    setLoading(true);
-    load();
-  };
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const ativos = clientes.filter(c => c.isAtivo);
+  const vencidos = ativos.filter(c => c.validadeCertificado && new Date(c.validadeCertificado) < hoje);
+  const aVencer = ativos.filter(c => {
+    if (!c.validadeCertificado) return false;
+    const diff = Math.ceil((new Date(c.validadeCertificado).getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+    return diff >= 0 && diff <= 30;
+  });
+  const validos = ativos.filter(c => {
+    if (!c.validadeCertificado) return false;
+    return new Date(c.validadeCertificado) >= hoje;
+  }).filter(c => {
+    const diff = Math.ceil((new Date(c.validadeCertificado!).getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+    return diff > 30;
+  });
+  const semCert = ativos.filter(c => !c.validadeCertificado || !c.linkCertificado);
 
-  const certStats = () => {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    let vencidos = 0, aVencer = 0, validos = 0, semCert = 0;
-    allClientes.forEach(c => {
-      if (!c.isAtivo) return;
-      if (!c.validadeCertificado || !c.linkCertificado) { semCert++; return; }
-      const venc = new Date(c.validadeCertificado);
-      venc.setHours(0, 0, 0, 0);
-      const diff = Math.ceil((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-      if (diff < 0) vencidos++;
-      else if (diff <= 30) aVencer++;
-      else validos++;
-    });
-    return [
-      { label: 'Vencidos', value: vencidos, color: colors.error },
-      { label: 'A Vencer', value: aVencer, color: colors.warning },
-      { label: 'Válidos', value: validos, color: colors.success },
-      { label: 'Sem Cert.', value: semCert, color: colors.textSecondary },
-    ];
-  };
+  const certStats = [
+    { label: 'Vencidos', value: vencidos.length, data: vencidos, color: colors.error },
+    { label: 'A Vencer', value: aVencer.length, data: aVencer, color: colors.warning },
+    { label: 'Válidos', value: validos.length, data: validos, color: colors.success },
+    { label: 'Sem Cert.', value: semCert.length, data: semCert, color: colors.textSecondary },
+  ];
 
   const formatCNPJ = (cnpj: string) => {
     const digits = cnpj.replace(/\D/g, '');
@@ -101,10 +104,10 @@ export default function ListaClientesScreen() {
     </TouchableOpacity>
   );
 
-  if (loading && allClientes.length === 0) {
+  if (loading && clientes.length === 0) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#fff" />
       </View>
     );
   }
@@ -115,7 +118,7 @@ export default function ListaClientesScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Buscar por CNPJ ou Razão Social"
-          placeholderTextColor={colors.textDisabled}
+          placeholderTextColor="#94a3b8"
           value={search}
           onChangeText={setSearch}
           autoCapitalize="none"
@@ -135,11 +138,18 @@ export default function ListaClientesScreen() {
         </View>
       </View>
       <View style={styles.certDashboard}>
-        {certStats().map((stat) => (
-          <View key={stat.label} style={[styles.certCard, { borderLeftColor: stat.color }]}>
+        {certStats.map((stat) => (
+          <TouchableOpacity
+            key={stat.label}
+            style={[styles.certCard, { borderTopColor: stat.color }]}
+            onPress={() => {
+              const names = stat.data.map(c => `${c.razaoSocial} - ${c.cnpj}`).join('\n');
+              Alert.alert(`${stat.label} (${stat.value})`, names || 'Nenhum');
+            }}
+          >
             <Text style={[styles.certValue, { color: stat.color }]}>{stat.value}</Text>
             <Text style={styles.certLabel}>{stat.label}</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
       <FlatList
@@ -162,37 +172,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    borderRadius: borderRadius.md,
   },
   searchInput: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#fff', borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md, paddingVertical: 10,
+    fontSize: 15, color: colors.textPrimary,
+    borderWidth: 1, borderColor: colors.border,
     marginBottom: spacing.sm,
   },
   statusRow: { flexDirection: 'row', gap: spacing.sm },
   statusBtn: {
     flex: 1, paddingVertical: 8, borderRadius: borderRadius.md,
-    alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center', backgroundColor: colors.background,
   },
-  statusBtnActive: { backgroundColor: '#fff' },
-  statusText: { fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.8)' },
-  statusTextActive: { color: colors.primary, fontWeight: '600' },
+  statusBtnActive: { backgroundColor: colors.primary },
+  statusText: { fontSize: 13, fontWeight: '500', color: '#fff' },
+  statusTextActive: { color: '#fff', fontWeight: '600' },
   certDashboard: {
-    flexDirection: 'row', gap: spacing.xs, marginHorizontal: spacing.md,
-    marginTop: spacing.sm,
+    flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md,
+    marginTop: spacing.sm, marginBottom: spacing.xs,
   },
   certCard: {
-    flex: 1, backgroundColor: colors.surface, borderRadius: borderRadius.sm,
-    padding: spacing.sm, alignItems: 'center', borderLeftWidth: 3,
+    flex: 1, backgroundColor: colors.surface, borderRadius: borderRadius.md,
+    paddingVertical: spacing.md, alignItems: 'center', borderTopWidth: 3,
+    elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1, shadowRadius: 3,
   },
-  certValue: { fontSize: 20, fontWeight: 'bold' },
-  certLabel: { fontSize: 9, color: colors.textSecondary, marginTop: 2, textAlign: 'center' },
-  list: { padding: spacing.md, gap: spacing.sm },
+  certValue: { fontSize: 24, fontWeight: 'bold' },
+  certLabel: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
+  list: { paddingHorizontal: spacing.md, gap: spacing.sm, paddingBottom: spacing.xl },
   card: {
     backgroundColor: colors.surface, borderRadius: borderRadius.md, padding: spacing.md,
     elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3,

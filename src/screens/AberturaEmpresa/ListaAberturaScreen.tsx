@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  RefreshControl, ActivityIndicator, Alert,
+  RefreshControl, ActivityIndicator, Alert, Modal,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
@@ -17,6 +18,8 @@ export default function ListaAberturaScreen() {
   const [formularios, setFormularios] = useState<AberturaEmpresa[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [linkModalVisible, setLinkModalVisible] = useState(false);
+  const [linkGerado, setLinkGerado] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -40,10 +43,17 @@ export default function ListaAberturaScreen() {
   const handleGerarLink = async () => {
     try {
       const { link } = await aberturaEmpresaApi.gerarLink();
-      Alert.alert('Link gerado!', `Compartilhe este link com o cliente:\n\n${link}`);
+      setLinkGerado(link);
+      setLinkModalVisible(true);
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Falha ao gerar link');
     }
+  };
+
+  const handleCopiarLink = async () => {
+    await Clipboard.setStringAsync(linkGerado);
+    setLinkModalVisible(false);
+    Alert.alert('Copiado!', 'Link copiado para a área de transferência');
   };
 
   const renderItem = ({ item }: { item: AberturaEmpresa }) => (
@@ -89,6 +99,29 @@ export default function ListaAberturaScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={<Text style={styles.empty}>Nenhum formulário encontrado</Text>}
       />
+
+      <Modal
+        visible={linkModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLinkModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Link Gerado</Text>
+            <Text style={styles.modalSubtitle}>Compartilhe este link com o cliente:</Text>
+            <Text style={styles.modalLink} selectable>{linkGerado}</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalBtnCopy} onPress={handleCopiarLink}>
+                <Text style={styles.modalBtnCopyText}>📋 Copiar Link</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnClose} onPress={() => setLinkModalVisible(false)}>
+                <Text style={styles.modalBtnCloseText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -112,4 +145,33 @@ const styles = StyleSheet.create({
   info: { fontSize: 14, color: colors.textSecondary, marginBottom: 2 },
   date: { fontSize: 12, color: colors.textDisabled, marginTop: spacing.xs },
   empty: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: spacing.xl, fontSize: 16 },
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center', alignItems: 'center', padding: spacing.lg,
+  },
+  modalContent: {
+    width: '100%', backgroundColor: colors.surface, borderRadius: borderRadius.lg,
+    padding: spacing.lg, elevation: 8,
+  },
+  modalTitle: {
+    fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: spacing.sm,
+  },
+  modalSubtitle: {
+    fontSize: 14, color: colors.textSecondary, marginBottom: spacing.md,
+  },
+  modalLink: {
+    fontSize: 14, color: colors.primary, backgroundColor: colors.background,
+    padding: spacing.md, borderRadius: borderRadius.sm, marginBottom: spacing.lg,
+    textAlign: 'center', overflow: 'hidden',
+  },
+  modalActions: { gap: spacing.sm },
+  modalBtnCopy: {
+    backgroundColor: colors.primary, borderRadius: borderRadius.md,
+    paddingVertical: 14, alignItems: 'center',
+  },
+  modalBtnCopyText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  modalBtnClose: {
+    borderRadius: borderRadius.md, paddingVertical: 12, alignItems: 'center',
+  },
+  modalBtnCloseText: { color: colors.textSecondary, fontSize: 14 },
 });

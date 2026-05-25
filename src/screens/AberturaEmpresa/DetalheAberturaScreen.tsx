@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert,
   TouchableOpacity, Linking,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { AberturaEmpresa, QuadroSocietario } from '../../types/abertura-empresa';
@@ -48,11 +49,18 @@ export default function DetalheAberturaScreen() {
     </View>
   );
 
-  const handleDownload = (docId: number, nome: string) => {
+  const handleDownload = async (docId: number, tipo: string) => {
     const url = `${API_URL}/AberturaEmpresa/DownloadDocumento?documentoId=${docId}`;
-    Linking.openURL(url).catch(() =>
-      Alert.alert('Erro', 'Não foi possível baixar o documento')
-    );
+    try {
+      const primeiroNome = (form?.opcao1NomeEmpresa || '').split(' ')[0] || 'documento';
+      const nomeArquivo = `${primeiroNome}_${tipo || 'documento'}`;
+      const fileUri = `${FileSystem.cacheDirectory}${nomeArquivo}`;
+      const result = await FileSystem.downloadAsync(url, fileUri);
+      const contentUri = await FileSystem.getContentUriAsync(result.uri);
+      await Linking.openURL(contentUri);
+    } catch {
+      Alert.alert('Erro', 'Não foi possível baixar o documento');
+    }
   };
 
   return (
@@ -145,7 +153,7 @@ export default function DetalheAberturaScreen() {
             <TouchableOpacity
               key={doc.id}
               style={styles.docCard}
-              onPress={() => handleDownload(doc.id, doc.nomeArquivo)}
+              onPress={() => handleDownload(doc.id, doc.tipoDocumento)}
             >
               <View style={styles.docInfo}>
                 <Text style={styles.docName}>{doc.tipoDocumento || 'Documento'}</Text>

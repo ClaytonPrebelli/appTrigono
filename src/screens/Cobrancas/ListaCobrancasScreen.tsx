@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   RefreshControl, ActivityIndicator, Alert, TextInput,
@@ -12,12 +12,18 @@ import { colors, spacing, borderRadius } from '../../theme';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
+function formatMesRef(data: Date) {
+  const m = String(data.getMonth() + 1).padStart(2, '0');
+  const a = data.getFullYear();
+  return `${m}/${a}`;
+}
+
 export default function ListaCobrancasScreen() {
   const navigation = useNavigation<NavProp>();
   const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [referencia, setReferencia] = useState('');
+  const [referencia, setReferencia] = useState(formatMesRef(new Date()));
 
   const load = useCallback(async (ref?: string) => {
     try {
@@ -31,41 +37,45 @@ export default function ListaCobrancasScreen() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(referencia); }, [referencia, load]);
 
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     load(referencia || undefined);
+  }, [referencia, load]);
+
+  const navigateMes = (dir: number) => {
+    const parts = referencia.split('/');
+    if (parts.length !== 2) return;
+    let mes = parseInt(parts[0], 10);
+    let ano = parseInt(parts[1], 10);
+    mes += dir;
+    if (mes < 1) { mes = 12; ano--; }
+    if (mes > 12) { mes = 1; ano++; }
+    setReferencia(`${String(mes).padStart(2, '0')}/${ano}`);
   };
 
-  const handleFilter = () => {
-    setLoading(true);
-    load(referencia || undefined);
-  };
+  const hoje = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
+  const pendentes = useMemo(() => cobrancas.filter(c => !c.isPago), [cobrancas]);
+  const pagas = useMemo(() => cobrancas.filter(c => c.isPago), [cobrancas]);
+  const vencidas = useMemo(() => pendentes.filter(c => new Date(c.dataVencimento) < hoje), [pendentes, hoje]);
+  const valorDevido = useMemo(() => pendentes.reduce((a, c) => a + c.valor, 0), [pendentes]);
+  const valorPago = useMemo(() => pagas.reduce((a, c) => a + c.valor, 0), [pagas]);
 
   const formatCurrency = (value: number) =>
     `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('pt-BR');
+    return new Date(dateStr).toLocaleDateString('pt-BR');
   };
 
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const pendentes = cobrancas.filter(c => !c.isPago);
-  const pagas = cobrancas.filter(c => c.isPago);
-  const vencidas = pendentes.filter(c => new Date(c.dataVencimento) < hoje);
-  const valorDevido = pendentes.reduce((acc, c) => acc + c.valor, 0);
-  const valorPago = pagas.reduce((acc, c) => acc + c.valor, 0);
-
   const dashboardItems = [
-    { label: 'Abertas', value: pendentes.length, color: colors.warning },
-    { label: 'Vencidas', value: vencidas.length, color: colors.error },
-    { label: 'Pagas', value: pagas.length, color: colors.success },
-    { label: 'Devido', value: formatCurrency(valorDevido), color: colors.warning },
-    { label: 'Pago', value: formatCurrency(valorPago), color: colors.success },
+    { label: 'Abertas', value: pendentes.length, data: pendentes, color: colors.warning },
+    { label: 'Vencidas', value: vencidas.length, data: vencidas, color: colors.error },
+    { label: 'Pagas', value: pagas.length, data: pagas, color: colors.success },
+    { label: 'Devido', value: formatCurrency(valorDevido), data: pendentes, color: colors.warning },
+    { label: 'Pago', value: formatCurrency(valorPago), data: pagas, color: colors.success },
   ];
 
   const renderItem = ({ item }: { item: Cobranca }) => {
@@ -97,7 +107,7 @@ export default function ListaCobrancasScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#fff" />
       </View>
     );
   }
@@ -105,26 +115,33 @@ export default function ListaCobrancasScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.filters}>
-        <View style={styles.filterRow}>
-          <TextInput
-            style={styles.refInput}
-            placeholder="Referência (MM/AAAA)"
-            placeholderTextColor={colors.textDisabled}
-            value={referencia}
-            onChangeText={setReferencia}
-            autoCapitalize="none"
-          />
-          <TouchableOpacity style={styles.filterBtn} onPress={handleFilter}>
-            <Text style={styles.filterBtnText}>Filtrar</Text>
+        <View style={styles.mesNav}>
+          <TouchableOpacity style={styles.mesArrow} onPress={() => navigateMes(-1)}>
+            <Text style={styles.mesArrowText}>‹</Text>
+          </TouchableOpacity>
+          <View style={styles.mesLabelContainer}>
+            <Text style={styles.mesLabel}>{referencia}</Text>
+          </View>
+          <TouchableOpacity style={styles.mesArrow} onPress={() => navigateMes(1)}>
+            <Text style={styles.mesArrowText}>›</Text>
           </TouchableOpacity>
         </View>
       </View>
       <View style={styles.dashboard}>
         {dashboardItems.map((item) => (
-          <View key={item.label} style={[styles.dashCard, { borderLeftColor: item.color }]}>
+          <TouchableOpacity
+            key={item.label}
+            style={[styles.dashCard, { borderTopColor: item.color }]}
+            onPress={() => {
+              const names = (item.data as Cobranca[]).map(c =>
+                `${c.descricao} - ${formatCurrency(c.valor)}`
+              ).join('\n');
+              Alert.alert(`${item.label} (${item.value})`, names || 'Nenhum');
+            }}
+          >
             <Text style={[styles.dashValue, { color: item.color }]}>{item.value}</Text>
             <Text style={styles.dashLabel}>{item.label}</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
       <TouchableOpacity
@@ -149,30 +166,31 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   filters: {
-    backgroundColor: colors.surface, padding: spacing.sm,
+    backgroundColor: colors.surface, borderRadius: borderRadius.md,
+    padding: spacing.sm, marginHorizontal: spacing.md, marginTop: spacing.sm,
   },
-  filterRow: { flexDirection: 'row', gap: spacing.sm },
-  refInput: {
-    flex: 1, backgroundColor: colors.background, borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md, paddingVertical: 10, fontSize: 15,
-    color: '#fff', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+  mesNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  mesArrow: { padding: spacing.sm },
+  mesArrowText: { fontSize: 28, color: colors.primary, fontWeight: '300' },
+  mesLabelContainer: {
+    backgroundColor: colors.surface, borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.sm,
+    borderWidth: 1, borderColor: colors.border, minWidth: 120, alignItems: 'center',
   },
-  filterBtn: {
-    backgroundColor: colors.primaryLighter, borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.lg, justifyContent: 'center',
-  },
-  filterBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  mesLabel: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
   dashboard: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs,
-    paddingHorizontal: spacing.md, marginTop: spacing.sm,
+    flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md,
+    marginTop: spacing.sm, marginBottom: spacing.xs,
   },
   dashCard: {
-    width: '19%', backgroundColor: colors.surface, borderRadius: borderRadius.sm,
-    padding: spacing.xs, alignItems: 'center', borderLeftWidth: 3,
+    flex: 1, backgroundColor: colors.surface, borderRadius: borderRadius.md,
+    paddingVertical: spacing.md, alignItems: 'center', borderTopWidth: 3,
+    elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1, shadowRadius: 3,
   },
-  dashValue: { fontSize: 14, fontWeight: 'bold' },
-  dashLabel: { fontSize: 8, color: colors.textSecondary, marginTop: 1, textAlign: 'center' },
-  list: { padding: spacing.md, gap: spacing.sm },
+  dashValue: { fontSize: 16, fontWeight: 'bold' },
+  dashLabel: { fontSize: 9, color: colors.textSecondary, marginTop: 2 },
+  list: { paddingHorizontal: spacing.md, gap: spacing.sm, paddingBottom: spacing.xl },
   card: {
     backgroundColor: colors.surface, borderRadius: borderRadius.md, padding: spacing.md,
     elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3,
@@ -188,7 +206,7 @@ const styles = StyleSheet.create({
   empty: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: spacing.xl, fontSize: 16 },
   addButton: {
     backgroundColor: colors.primaryLighter, borderRadius: borderRadius.md,
-    paddingVertical: 12, alignItems: 'center', margin: spacing.md,
+    paddingVertical: 12, alignItems: 'center', marginHorizontal: spacing.md, marginTop: spacing.sm,
   },
   addButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
