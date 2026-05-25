@@ -26,6 +26,30 @@ jobs:
       - name: Prebuild Expo
         run: npx expo prebuild --platform android --clean
 
+      - name: Replace broken hermesc with a wrapper (skip bytecode compilation)
+        run: |
+          HERMESC=node_modules/react-native/sdks/hermesc/linux64-bin/hermesc
+          cat > "$HERMESC" << 'EOF'
+          #!/bin/bash
+          # Hermes compiler wrapper: copies JS bundle as-is (no bytecode compile)
+          args=("$@")
+          input=""
+          output=""
+          for ((i=0; i<${#args[@]}; i++)); do
+            if [[ "${args[$i]}" == "-out" ]] && [[ $i+1 -lt ${#args[@]} ]]; then
+              output="${args[$i+1]}"
+            elif [[ "${args[$i]}" == "-output-source-map" ]] || [[ "${args[$i]}" == "-O" ]]; then
+              true
+            elif [[ "${args[$i]}" != -* ]] && [[ -z "$input" ]]; then
+              input="${args[$i]}"
+            fi
+          done
+          if [ -n "$input" ] && [ -n "$output" ]; then
+            cp "$input" "$output"
+          fi
+          EOF
+          chmod +x "$HERMESC"
+
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
