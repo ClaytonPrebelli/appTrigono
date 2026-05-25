@@ -40,15 +40,18 @@ export default function ListaClientesScreen() {
 
   useEffect(() => { load(); }, [load]);
 
+  const normalizar = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
   const handleSearch = (texto: string) => {
     setSearch(texto);
     let result = [...clientes];
     if (statusFilter === 'ativo') result = result.filter(c => c.isAtivo === true);
     else if (statusFilter === 'inativo') result = result.filter(c => c.isAtivo === false);
     if (texto.trim()) {
-      const q = texto.trim().toLowerCase();
+      const q = normalizar(texto);
       result = result.filter(c =>
-        (c.razaoSocial || '').toLowerCase().includes(q) ||
+        normalizar(c.razaoSocial || '').includes(q) ||
+        normalizar(c.nomeFantasia || '').includes(q) ||
         (c.cnpj || '').replace(/\D/g, '').includes(q.replace(/\D/g, ''))
       );
     }
@@ -62,9 +65,10 @@ export default function ListaClientesScreen() {
     if (filtro === 'ativo') result = result.filter(c => c.isAtivo === true);
     else if (filtro === 'inativo') result = result.filter(c => c.isAtivo === false);
     if (search.trim()) {
-      const q = search.trim().toLowerCase();
+      const q = normalizar(search);
       result = result.filter(c =>
-        (c.razaoSocial || '').toLowerCase().includes(q) ||
+        normalizar(c.razaoSocial || '').includes(q) ||
+        normalizar(c.nomeFantasia || '').includes(q) ||
         (c.cnpj || '').replace(/\D/g, '').includes(q.replace(/\D/g, ''))
       );
     }
