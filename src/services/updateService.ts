@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
-import { Paths, File } from 'expo-file-system';
-import { Linking, Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
+import { Linking } from 'react-native';
 
 const OWNER = 'ClaytonPrebelli';
 const REPO = 'appTrigono';
@@ -62,23 +62,16 @@ export async function baixarEInstalar(
   nomeArquivo: string,
   onProgress?: (percent: number) => void
 ): Promise<void> {
-  const destino = new File(Paths.cache, nomeArquivo);
+  const fileUri = `${FileSystem.cacheDirectory}${nomeArquivo}`;
 
-  if (destino.exists) {
-    await Linking.openURL(destino.contentUri);
+  const info = await FileSystem.getInfoAsync(fileUri);
+  if (info.exists) {
+    const contentUri = await FileSystem.getContentUriAsync(fileUri);
+    await Linking.openURL(contentUri);
     return;
   }
 
-  const task = File.createDownloadTask(downloadUrl, destino, {
-    onProgress: ({ bytesWritten, totalBytes }) => {
-      if (totalBytes > 0 && onProgress) {
-        onProgress(Math.round((bytesWritten / totalBytes) * 100));
-      }
-    },
-  });
-
-  const arquivo = await task.downloadAsync();
-  if (!arquivo) throw new Error('Download cancelado');
-
-  await Linking.openURL(arquivo.contentUri);
+  const result = await FileSystem.downloadAsync(downloadUrl, fileUri);
+  const contentUri = await FileSystem.getContentUriAsync(result.uri);
+  await Linking.openURL(contentUri);
 }

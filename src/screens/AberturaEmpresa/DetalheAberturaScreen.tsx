@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert,
   TouchableOpacity, Linking,
 } from 'react-native';
-import { Paths, File } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { AberturaEmpresa, QuadroSocietario } from '../../types/abertura-empresa';
@@ -54,9 +54,10 @@ export default function DetalheAberturaScreen() {
     try {
       const primeiroNome = (form?.opcao1NomeEmpresa || '').split(' ')[0] || 'documento';
       const nomeArquivo = `${primeiroNome}_${tipo || 'documento'}`;
-      const destino = new File(Paths.cache, nomeArquivo);
-      const arquivo = await File.downloadFileAsync(url, destino, { idempotent: true });
-      await Linking.openURL(arquivo.contentUri);
+      const fileUri = `${FileSystem.cacheDirectory}${nomeArquivo}`;
+      const result = await FileSystem.downloadAsync(url, fileUri);
+      const contentUri = await FileSystem.getContentUriAsync(result.uri);
+      await Linking.openURL(contentUri);
     } catch {
       Alert.alert('Erro', 'Não foi possível baixar o documento');
     }
