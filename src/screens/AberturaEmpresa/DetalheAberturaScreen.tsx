@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   statusRow: { marginBottom: spacing.sm },
   statusValue: { fontSize: 18, fontWeight: '700' },
   socioCard: {
-    backgroundColor: colors.background, borderRadius: borderRadius.sm,
+    backgroundColor: '#fff', borderRadius: borderRadius.sm,
     padding: spacing.sm, marginBottom: spacing.sm, borderLeftWidth: 3,
     borderLeftColor: colors.primary,
   },
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   },
   docCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.background, borderRadius: borderRadius.sm,
+    backgroundColor: '#fff', borderRadius: borderRadius.sm,
     padding: spacing.sm, marginBottom: spacing.sm,
   },
   docInfo: { flex: 1 },

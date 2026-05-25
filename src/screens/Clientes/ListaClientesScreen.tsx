@@ -23,6 +23,7 @@ export default function ListaClientesScreen() {
   const [statusFilter, setStatusFilter] = useState<'todos' | 'ativo' | 'inativo'>('todos');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalData, setModalData] = useState<{ titulo: string; itens: { titulo: string; linhas: { label: string; valor: string }[] }[] }>({ titulo: '', itens: [] });
+  const [filterKey, setFilterKey] = useState(0);
 
   const load = useCallback(async () => {
     try {
@@ -52,6 +53,7 @@ export default function ListaClientesScreen() {
       );
     }
     setFilteredClientes(result);
+    setFilterKey(k => k + 1);
   };
 
   const handleStatusFilter = (filtro: typeof statusFilter) => {
@@ -182,7 +184,7 @@ export default function ListaClientesScreen() {
       </View>
       <Text style={styles.debugCount}>{filteredClientes.length} de {clientes.length} clientes</Text>
       <FlatList
-        key={`lista-${search}`}
+        key={`lista-${filterKey}`}
         data={filteredClientes}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
