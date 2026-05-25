@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  RefreshControl, ActivityIndicator, Alert, Modal,
+  RefreshControl, ActivityIndicator, Alert, Modal, TextInput,
 } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
@@ -48,12 +47,6 @@ export default function ListaAberturaScreen() {
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Falha ao gerar link');
     }
-  };
-
-  const handleCopiarLink = async () => {
-    await Clipboard.setStringAsync(linkGerado);
-    setLinkModalVisible(false);
-    Alert.alert('Copiado!', 'Link copiado para a área de transferência');
   };
 
   const renderItem = ({ item }: { item: AberturaEmpresa }) => (
@@ -109,16 +102,17 @@ export default function ListaAberturaScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Link Gerado</Text>
-            <Text style={styles.modalSubtitle}>Compartilhe este link com o cliente:</Text>
-            <Text style={styles.modalLink} selectable>{linkGerado}</Text>
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalBtnCopy} onPress={handleCopiarLink}>
-                <Text style={styles.modalBtnCopyText}>📋 Copiar Link</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalBtnClose} onPress={() => setLinkModalVisible(false)}>
-                <Text style={styles.modalBtnCloseText}>Fechar</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.modalSubtitle}>Compartilhe este link com o cliente (longa pressão para copiar):</Text>
+            <TextInput
+              style={styles.modalLink}
+              value={linkGerado}
+              editable={false}
+              multiline
+              selectTextOnFocus
+            />
+            <TouchableOpacity style={styles.modalBtnClose} onPress={() => setLinkModalVisible(false)}>
+              <Text style={styles.modalBtnCloseText}>Fechar</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -162,16 +156,11 @@ const styles = StyleSheet.create({
   modalLink: {
     fontSize: 14, color: colors.primary, backgroundColor: colors.background,
     padding: spacing.md, borderRadius: borderRadius.sm, marginBottom: spacing.lg,
-    textAlign: 'center', overflow: 'hidden',
+    textAlign: 'center',
   },
-  modalActions: { gap: spacing.sm },
-  modalBtnCopy: {
-    backgroundColor: colors.primary, borderRadius: borderRadius.md,
-    paddingVertical: 14, alignItems: 'center',
-  },
-  modalBtnCopyText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   modalBtnClose: {
-    borderRadius: borderRadius.md, paddingVertical: 12, alignItems: 'center',
+    borderRadius: borderRadius.md, paddingVertical: 14, alignItems: 'center',
+    backgroundColor: colors.primary,
   },
-  modalBtnCloseText: { color: colors.textSecondary, fontSize: 14 },
+  modalBtnCloseText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
