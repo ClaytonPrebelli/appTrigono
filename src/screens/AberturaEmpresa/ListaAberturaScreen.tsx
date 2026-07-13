@@ -49,6 +49,29 @@ export default function ListaAberturaScreen() {
     }
   };
 
+  const handleCancelar = (id: number) => {
+    Alert.alert(
+      'Cancelar Abertura',
+      'Tem certeza que deseja cancelar esta abertura? Esta ação não pode ser desfeita.',
+      [
+        { text: 'Não', style: 'cancel' },
+        {
+          text: 'Sim, Cancelar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await aberturaEmpresaApi.deletarFormulario(id);
+              load();
+            } catch (err: any) {
+              const msg = err?.response?.data?.message || err?.message || 'Erro ao cancelar abertura.';
+              Alert.alert('Erro', msg);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderItem = ({ item }: { item: AberturaEmpresa }) => (
     <TouchableOpacity
       style={styles.card}
@@ -68,6 +91,9 @@ export default function ListaAberturaScreen() {
       {item.dataCadastro && (
         <Text style={styles.date}>Criado em: {new Date(item.dataCadastro).toLocaleDateString('pt-BR')}</Text>
       )}
+      <TouchableOpacity style={styles.cancelBtn} onPress={() => handleCancelar(item.id!)}>
+        <Text style={styles.cancelBtnText}>Cancelar</Text>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -149,6 +175,11 @@ const styles = StyleSheet.create({
   info: { fontSize: 14, color: colors.textSecondary, marginBottom: 2 },
   date: { fontSize: 12, color: colors.textDisabled, marginTop: spacing.xs },
   empty: { textAlign: 'center', color: 'rgba(255,255,255,0.6)', marginTop: spacing.xl, fontSize: 16 },
+  cancelBtn: {
+    marginTop: spacing.sm, backgroundColor: colors.error, borderRadius: borderRadius.sm,
+    paddingVertical: 8, alignItems: 'center',
+  },
+  cancelBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center', alignItems: 'center', padding: spacing.lg,

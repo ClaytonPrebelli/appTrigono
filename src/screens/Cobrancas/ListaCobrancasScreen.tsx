@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { Cobranca } from '../../types/cobranca';
 import { cobrancasApi } from '../../api/cobrancas';
@@ -73,6 +75,33 @@ export default function ListaCobrancasScreen() {
     return new Date(dateStr).toLocaleDateString('pt-BR');
   };
 
+  const handleExportCSV = async () => {
+    if (cobrancas.length === 0) {
+      Alert.alert('Aviso', 'Nenhuma cobrança para exportar.');
+      return;
+    }
+    const header = 'Cliente;Descrição;Valor;Vencimento;Referência;Status;Data Pagamento;Método';
+    const rows = cobrancas.map(c => {
+      const venc = new Date(c.dataVencimento);
+      const isVencida = !c.isPago && venc < new Date();
+      const status = c.isPago ? 'Pago' : isVencida ? 'Vencida' : 'Pendente';
+      const valStr = c.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      return `${c.cliente?.razaoSocial || 'Cliente #' + c.clienteId};${c.descricao};${valStr};${formatDate(c.dataVencimento)};${c.referencia || ''};${status};${c.dataPagamento ? formatDate(c.dataPagamento) : ''};${c.metodoPagamento || ''}`;
+    });
+    const csv = '\uFEFF' + header + '\n' + rows.join('\n');
+    const file = new FileSystem.File(FileSystem.Paths.document, `cobrancas_${referencia.replace('/', '_')}.csv`);
+    try {
+      file.write(csv);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(file.uri, { mimeType: 'text/csv' });
+      } else {
+        Alert.alert('Sucesso', 'Arquivo salvo em: ' + file.uri);
+      }
+    } catch (err: any) {
+      Alert.alert('Erro', err.message || 'Falha ao exportar.');
+    }
+  };
+
   const dashboardLinha1 = [
     { label: 'Abertas', value: pendentes.length, data: pendentes, color: colors.warning },
     { label: 'Vencidas', value: vencidas.length, data: vencidas, color: colors.error },
@@ -132,6 +161,9 @@ export default function ListaCobrancasScreen() {
             <Text style={styles.mesArrowText}>›</Text>
           </TouchableOpacity>
         </View>
+        <TouchableOpacity style={styles.exportBtn} onPress={handleExportCSV}>
+          <Text style={styles.exportBtnText}>Exportar CSV</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.dashboard}>
@@ -223,6 +255,11 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, minWidth: 120, alignItems: 'center',
   },
   mesLabel: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+  exportBtn: {
+    backgroundColor: colors.primary, borderRadius: borderRadius.md,
+    paddingVertical: 8, alignItems: 'center', marginTop: spacing.sm,
+  },
+  exportBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   dashboard: {
     paddingHorizontal: spacing.md, marginTop: spacing.md, marginBottom: spacing.sm, gap: spacing.lg,
   },

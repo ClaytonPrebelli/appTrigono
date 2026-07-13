@@ -139,6 +139,13 @@ export default function DetalheCobrancaScreen() {
         {cobranca.metodoPagamento && <Field label="Método" value={cobranca.metodoPagamento} />}
       </View>
 
+      <TouchableOpacity
+        style={[styles.editBtn]}
+        onPress={() => navigation.navigate('RegistroCobranca', { id: cobranca.id })}
+      >
+        <Text style={styles.editBtnText}>Editar Cobrança</Text>
+      </TouchableOpacity>
+
       {!cobranca.isPago && (
         <TouchableOpacity
           style={[styles.payBtn, paying && styles.payBtnDisabled]}
@@ -183,6 +190,11 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 16, color: colors.textSecondary },
   valorLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: 4 },
   valorValue: { fontSize: 32, fontWeight: 'bold', color: colors.textPrimary },
+  editBtn: {
+    backgroundColor: colors.primary, borderRadius: borderRadius.md,
+    paddingVertical: 14, alignItems: 'center',
+  },
+  editBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   payBtn: {
     backgroundColor: colors.success, borderRadius: borderRadius.md,
     paddingVertical: 14, alignItems: 'center',

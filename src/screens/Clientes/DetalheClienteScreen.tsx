@@ -4,6 +4,8 @@ import {
   TouchableOpacity, Linking,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { Cliente } from '../../types/cliente';
 import { Cobranca } from '../../types/cobranca';
@@ -62,6 +64,33 @@ export default function DetalheClienteScreen() {
     }
   };
 
+  const handleExportCSV = async () => {
+    if (cobrancas.length === 0) {
+      Alert.alert('Aviso', 'Nenhuma cobrança para exportar.');
+      return;
+    }
+    const header = 'Descrição;Valor;Vencimento;Referência;Status;Data Pagamento;Método';
+    const rows = cobrancas.map(c => {
+      const venc = new Date(c.dataVencimento);
+      const isVencida = !c.isPago && venc < new Date();
+      const status = c.isPago ? 'Pago' : isVencida ? 'Vencida' : 'Pendente';
+      const valStr = c.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      return `${c.descricao};${valStr};${new Date(c.dataVencimento).toLocaleDateString('pt-BR')};${c.referencia || ''};${status};${c.dataPagamento ? new Date(c.dataPagamento).toLocaleDateString('pt-BR') : ''};${c.metodoPagamento || ''}`;
+    });
+    const csv = '\uFEFF' + header + '\n' + rows.join('\n');
+    const file = new FileSystem.File(FileSystem.Paths.document, `cobrancas_cliente_${cliente.id}.csv`);
+    try {
+      file.write(csv);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(file.uri, { mimeType: 'text/csv' });
+      } else {
+        Alert.alert('Sucesso', 'Arquivo salvo em: ' + file.uri);
+      }
+    } catch (err: any) {
+      Alert.alert('Erro', err.message || 'Falha ao exportar.');
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.section}>
@@ -115,7 +144,14 @@ export default function DetalheClienteScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Cobranças ({cobrancas.length})</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Cobranças ({cobrancas.length})</Text>
+          {cobrancas.length > 0 && (
+            <TouchableOpacity style={styles.exportBtn} onPress={handleExportCSV}>
+              <Text style={styles.exportBtnText}>Exportar CSV</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         {cobrancas.length === 0 ? (
           <Text style={styles.emptyText}>Nenhuma cobrança encontrada</Text>
         ) : (
@@ -168,6 +204,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border,
     paddingBottom: spacing.sm,
   },
+  sectionHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border,
+    paddingBottom: spacing.sm,
+  },
+  exportBtn: {
+    backgroundColor: colors.primary, borderRadius: borderRadius.md,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  exportBtnText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   field: { marginBottom: spacing.sm },
   label: { fontSize: 12, color: colors.textSecondary, marginBottom: 2, textTransform: 'uppercase' },
   value: { fontSize: 16, color: colors.textPrimary },

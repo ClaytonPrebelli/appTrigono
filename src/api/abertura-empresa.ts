@@ -61,6 +61,11 @@ export const aberturaEmpresaApi = {
     await apiClient.delete(`/AberturaEmpresa/DeletarDocumento?documentoId=${documentoId}`);
   },
 
+  deletarFormulario: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete<{ message: string }>(`/AberturaEmpresa/DeletarFormulario/${id}`);
+    return response.data;
+  },
+
   listarDocumentos: async (aberturaId: number) => {
     const response = await apiClient.get(
       `/AberturaEmpresa/ListarDocumentos?aberturaId=${aberturaId}`
